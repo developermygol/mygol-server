@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+	<style type="text/css">
+		.OrgLogo {
+			margin: 10px;
+			max-width: 100px;
+			max-height: 100px;
+		}
+
+		.TeamLogo {
+			margin: 10px;
+			max-width: 100px;
+			max-height: 100px;
+		}
+
+		.Welcome {
+			font-size: 1.3rem;
+			font-weight: bold;
+		}
+
+		.Download {
+			display: flex;
+			justify-content: space-around;
+			margin: 10px;
+		}
+
+        .Icon {
+            margin: 0 20px;
+        }
+
+        .Icon img {
+            max-width: 150px;
+        }
+
+		p {
+			margin: 10px 0;
+		}
+
+		body {
+			padding: 10px;
+			text-align: center;
+			font-family: 'Helvetica', '', 'Open sans', 'Arial', 'Verdana', 'sans serif'
+		}
+
+		.Signature {
+			font-size: 0.6rem;
+		}
+
+		.Message {
+			
+		}
+
+        .Pin {
+            font-size: 2em;
+            font-weight: bold;
+        }
+	</style>
+</head>
+<body>
+    <img class="OrgLogo" src="{{Images.OrgLogo}}" alt="{{Org.Name}}" />
+    <p class="Welcome">Hola {{To.Name}},</p>
+    
+    <p>Descarga la aplicación para tu móvil y podrás gestionar tus partidos:</p>
+    <div class="Download">
+        <a class="Icon" href="https://itunes.apple.com/es/app/mygol-competiciones-f%C3%BAtbol/id1434613463?mt=8" style="display:inline-block;overflow:hidden;background:url(https://linkmaker.itunes.apple.com/assets/shared/badges/en-us/appstore-lrg.svg) no-repeat;width:135px;height:40px;background-size:contain;"></a>
+        <a class="Icon" href='https://play.google.com/store/apps/details?id=es.tsmgroup.mygol.player&utm_source=invite.email'><img alt='Disponible en Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/es_badge_web_generic.png' /></a>
+    </div>
+
+    {{#if ActivationPin}}
+    <p>Si esta es la primera vez que te das de alta en la plataforma, la app móvil te pedirá este PIN: </p>
+    <p class="Pin">{{ActivationPin}}</p>
+    {{/if}}
+
+    {{#if ActivationLink}}
+    <p>Si no has instalado la app móvil en tu teléfono, puedes activar tu cuenta de usuario a través de web en este enlace:</p>
+    <a href="{{ActivationLink}}">{{ActivationLink}}</a>
+    {{/if}}
+
+    <div class="Signature">
+        <p>Has recibido este correo porque participas en {{Org.Name}} como árbitro. Si no deseas recibir más correos nuestros no necesitas hacer nada, ya que si no completas el proceso de incripción, entedemos que no estás interesado.</p>
+        <p>Protección de datos y datos de contacto. Google Play y el logotipo Google Play son marcas registradas de Google LLC.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+	<style type="text/css">
+		.OrgLogo {
+			margin: 10px;
+		}
+
+		.TeamLogo {
+			margin: 10px;
+		}
+
+		.Welcome {
+			font-size: 1.3rem;
+			font-weight: bold;
+		}
+
+		.Download {
+			display: flex;
+			justify-content: space-around;
+			margin: 10px;
+		}
+
+		p {
+			margin: 10px 0;
+		}
+
+		body {
+			padding: 10px;
+			text-align: center;
+			font-family: 'Helvetica', '', 'Open sans', 'Arial', 'Verdana', 'sans serif'
+		}
+
+		.Signature {
+			font-size: 0.6rem;
+		}
+
+		.Message {
+
+		}
+	</style>
+</head>
+<body>
+
+	<img class="OrgLogo" src="{{Images.OrgLogo}}" alt="{{Org.Name}}" />
+	<p class="Welcome">Hola {{To.Name}},</p>
+	<p>Sentimos informarte de que ya no formas parte del equipo {{Team.Name}}.</p>
+	<img class="TeamLogo" src="{{Images.TeamLogo}}" alt="{{Team.Name}}" />
+
+	<div class="Signature">
+		<p>Protección de datos y datos de contacto</p>
+	</div>
+</body>
+</html>

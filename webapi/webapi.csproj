@@ -1,0 +1,64 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="NotificationTemplates\es\email.player.forgotpassword.html" />
+    <None Remove="NotificationTemplates\es\email.player.invite.html" />
+    <None Remove="NotificationTemplates\es\email.player.unlink.html" />
+    <None Remove="NotificationTemplates\es\email.referee.invite.html" />
+    <None Remove="OrgDbCreationScript.sql" />
+    <None Remove="PostgresDbCreationScript.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="NotificationTemplates\ca_ES\" />
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="7.1.0" />
+    <PackageReference Include="Handlebars.Net" Version="1.9.5" />
+    <PackageReference Include="HtmlSanitizer" Version="4.0.185" />
+    <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.1.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.8.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Npgsql" Version="3.2.6" />
+    <PackageReference Include="RestSharp" Version="106.3.1" />
+    <PackageReference Include="Serilog" Version="2.7.1" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="2.6.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="4.0.0" />
+    <PackageReference Include="Stripe.net" Version="17.7.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.2.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="NotificationTemplates\es\email.player.forgotpassword.html" />
+    <EmbeddedResource Include="NotificationTemplates\es\email.referee.invite.html" />
+    <EmbeddedResource Include="NotificationTemplates\es\email.player.invite.html" />
+    <EmbeddedResource Include="NotificationTemplates\es\email.player.unlink.html" />
+    <EmbeddedResource Include="OrgDbCreationScript.sql" />
+    <EmbeddedResource Include="PostgresDbCreationScript.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\contracts\contracts.csproj" />
+    <ProjectReference Include="..\Dapper\Dapper.Contrib\Dapper.Contrib.csproj" />
+    <ProjectReference Include="..\Dapper\Dapper\Dapper.csproj" />
+    <ProjectReference Include="..\notification.email\notification.email.csproj" />
+    <ProjectReference Include="..\storage.disk\storage.disk.csproj" />
+    <ProjectReference Include="..\webapi.models\webapi.models.csproj" />
+  </ItemGroup>
+
+</Project>

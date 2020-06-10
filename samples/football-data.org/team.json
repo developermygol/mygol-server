@@ -1,0 +1,18 @@
+{
+    "_links": {
+        "fixtures": {
+            "href": "http://api.football-data.org/v1/teams/745/fixtures"
+        },
+        "players": {
+            "href": "http://api.football-data.org/v1/teams/745/players"
+        },
+        "self": {
+            "href": "http://api.football-data.org/v1/teams/745"
+        }
+    },
+    "code": "LEG",
+    "crestUrl": "http://upload.wikimedia.org/wikipedia/en/thumb/0/02/Club_Deportivo_Leganés.png/180px-Club_Deportivo_Leganés.png",
+    "name": "CD Leganes",
+    "shortName": "Leganes",
+    "squadMarketValue": null
+}

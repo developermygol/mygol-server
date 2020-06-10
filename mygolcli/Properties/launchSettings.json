@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "mygolcli": {
+      "commandName": "Project",
+      "commandLineArgs": "createdb global"
+    }
+  }
+}

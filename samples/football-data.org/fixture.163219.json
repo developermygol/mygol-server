@@ -1,0 +1,361 @@
+{
+    "fixture": {
+        "_links": {
+            "awayTeam": {
+                "href": "http://api.football-data.org/v1/teams/263"
+            },
+            "competition": {
+                "href": "http://api.football-data.org/v1/competitions/455"
+            },
+            "homeTeam": {
+                "href": "http://api.football-data.org/v1/teams/745"
+            },
+            "self": {
+                "href": "http://api.football-data.org/v1/fixtures/163219"
+            }
+        },
+        "awayTeamName": "Deportivo Alavés",
+        "date": "2017-08-18T18:15:00Z",
+        "homeTeamName": "CD Leganes",
+        "matchday": 1,
+        "odds": null,
+        "result": {
+            "goalsAwayTeam": 0,
+            "goalsHomeTeam": 1,
+            "halfTime": {
+                "goalsAwayTeam": 0,
+                "goalsHomeTeam": 1
+            }
+        },
+        "status": "FINISHED"
+    },
+    "head2head": {
+        "awayTeamWins": 1,
+        "count": 8,
+        "draws": 5,
+        "fixtures": [
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/455"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/163025"
+                    }
+                },
+                "awayTeamName": "CD Leganes",
+                "date": "2018-01-21T11:00:00Z",
+                "homeTeamName": "Deportivo Alavés",
+                "matchday": 20,
+                "odds": null,
+                "result": {
+                    "goalsAwayTeam": 2,
+                    "goalsHomeTeam": 2,
+                    "halfTime": {
+                        "goalsAwayTeam": 0,
+                        "goalsHomeTeam": 0
+                    }
+                },
+                "status": "FINISHED"
+            },
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/455"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/163219"
+                    }
+                },
+                "awayTeamName": "Deportivo Alavés",
+                "date": "2017-08-18T18:15:00Z",
+                "homeTeamName": "CD Leganes",
+                "matchday": 1,
+                "odds": null,
+                "result": {
+                    "goalsAwayTeam": 0,
+                    "goalsHomeTeam": 1,
+                    "halfTime": {
+                        "goalsAwayTeam": 0,
+                        "goalsHomeTeam": 1
+                    }
+                },
+                "status": "FINISHED"
+            },
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/436"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/153671"
+                    }
+                },
+                "awayTeamName": "Deportivo Alavés",
+                "date": "2017-05-20T17:00:00Z",
+                "homeTeamName": "CD Leganes",
+                "matchday": 38,
+                "odds": {
+                    "awayWin": 3.5,
+                    "draw": 3.4,
+                    "homeWin": 2.1
+                },
+                "result": {
+                    "goalsAwayTeam": 1,
+                    "goalsHomeTeam": 1,
+                    "halfTime": {
+                        "goalsAwayTeam": 0,
+                        "goalsHomeTeam": 0
+                    }
+                },
+                "status": "FINISHED"
+            },
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/436"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/153857"
+                    }
+                },
+                "awayTeamName": "CD Leganes",
+                "date": "2017-01-21T17:30:00Z",
+                "homeTeamName": "Deportivo Alavés",
+                "matchday": 19,
+                "odds": null,
+                "result": {
+                    "goalsAwayTeam": 2,
+                    "goalsHomeTeam": 2,
+                    "halfTime": {
+                        "goalsAwayTeam": 1,
+                        "goalsHomeTeam": 1
+                    }
+                },
+                "status": "FINISHED"
+            },
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/400"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/147624"
+                    }
+                },
+                "awayTeamName": "Deportivo Alavés",
+                "date": "2016-02-28T11:00:00Z",
+                "homeTeamName": "CD Leganes",
+                "matchday": 27,
+                "odds": null,
+                "result": {
+                    "goalsAwayTeam": 0,
+                    "goalsHomeTeam": 2,
+                    "halfTime": {
+                        "goalsAwayTeam": 0,
+                        "goalsHomeTeam": 1
+                    }
+                },
+                "status": "FINISHED"
+            },
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/400"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/147794"
+                    }
+                },
+                "awayTeamName": "CD Leganes",
+                "date": "2015-09-27T15:00:00Z",
+                "homeTeamName": "Deportivo Alavés",
+                "matchday": 6,
+                "odds": null,
+                "result": {
+                    "goalsAwayTeam": 0,
+                    "goalsHomeTeam": 0
+                },
+                "status": "FINISHED"
+            },
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/359"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/140734"
+                    }
+                },
+                "awayTeamName": "CD Leganes",
+                "date": "2015-01-24T15:00:00Z",
+                "homeTeamName": "Deportivo Alavés",
+                "matchday": 22,
+                "odds": null,
+                "result": {
+                    "goalsAwayTeam": 0,
+                    "goalsHomeTeam": 2
+                },
+                "status": "FINISHED"
+            },
+            {
+                "_links": {
+                    "awayTeam": {
+                        "href": "http://api.football-data.org/v1/teams/263"
+                    },
+                    "competition": {
+                        "href": "http://api.football-data.org/v1/competitions/359"
+                    },
+                    "homeTeam": {
+                        "href": "http://api.football-data.org/v1/teams/745"
+                    },
+                    "self": {
+                        "href": "http://api.football-data.org/v1/fixtures/140966"
+                    }
+                },
+                "awayTeamName": "Deportivo Alavés",
+                "date": "2014-08-23T22:00:00Z",
+                "homeTeamName": "CD Leganes",
+                "matchday": 1,
+                "odds": null,
+                "result": {
+                    "goalsAwayTeam": 1,
+                    "goalsHomeTeam": 1
+                },
+                "status": "FINISHED"
+            }
+        ],
+        "homeTeamWins": 2,
+        "lastAwayWinAwayTeam": null,
+        "lastHomeWinHomeTeam": {
+            "_links": {
+                "awayTeam": {
+                    "href": "http://api.football-data.org/v1/teams/263"
+                },
+                "competition": {
+                    "href": "http://api.football-data.org/v1/competitions/455"
+                },
+                "homeTeam": {
+                    "href": "http://api.football-data.org/v1/teams/745"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/fixtures/163219"
+                }
+            },
+            "awayTeamName": "Deportivo Alavés",
+            "date": "2017-08-18T18:15:00Z",
+            "homeTeamName": "CD Leganes",
+            "matchday": 1,
+            "odds": null,
+            "result": {
+                "goalsAwayTeam": 0,
+                "goalsHomeTeam": 1,
+                "halfTime": {
+                    "goalsAwayTeam": 0,
+                    "goalsHomeTeam": 1
+                }
+            },
+            "status": "FINISHED"
+        },
+        "lastWinAwayTeam": {
+            "_links": {
+                "awayTeam": {
+                    "href": "http://api.football-data.org/v1/teams/745"
+                },
+                "competition": {
+                    "href": "http://api.football-data.org/v1/competitions/359"
+                },
+                "homeTeam": {
+                    "href": "http://api.football-data.org/v1/teams/263"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/fixtures/140734"
+                }
+            },
+            "awayTeamName": "CD Leganes",
+            "date": "2015-01-24T15:00:00Z",
+            "homeTeamName": "Deportivo Alavés",
+            "matchday": 22,
+            "odds": null,
+            "result": {
+                "goalsAwayTeam": 0,
+                "goalsHomeTeam": 2
+            },
+            "status": "FINISHED"
+        },
+        "lastWinHomeTeam": {
+            "_links": {
+                "awayTeam": {
+                    "href": "http://api.football-data.org/v1/teams/263"
+                },
+                "competition": {
+                    "href": "http://api.football-data.org/v1/competitions/455"
+                },
+                "homeTeam": {
+                    "href": "http://api.football-data.org/v1/teams/745"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/fixtures/163219"
+                }
+            },
+            "awayTeamName": "Deportivo Alavés",
+            "date": "2017-08-18T18:15:00Z",
+            "homeTeamName": "CD Leganes",
+            "matchday": 1,
+            "odds": null,
+            "result": {
+                "goalsAwayTeam": 0,
+                "goalsHomeTeam": 1,
+                "halfTime": {
+                    "goalsAwayTeam": 0,
+                    "goalsHomeTeam": 1
+                }
+            },
+            "status": "FINISHED"
+        },
+        "timeFrameEnd": "2018-01-21",
+        "timeFrameStart": "2014-08-24"
+    }
+}
