@@ -1,0 +1,117 @@
+CREATE TABLE version (
+	v			INTEGER
+);
+
+CREATE TABLE users (
+	id 			SERIAL, 
+	type 		INTEGER, 
+	login		TEXT, 
+	authData	TEXT,
+	email 		TEXT, 
+	name		TEXT
+);
+
+CREATE TABLE tournaments (
+	id			SERIAL, 
+	name		TEXT NOT NULL
+);
+
+CREATE TABLE categories (
+	id 			SERIAL,
+	idTournament	INTEGER NOT NULL, 
+	name 		TEXT NOT NULL
+);
+
+CREATE TABLE teams (
+	id 			SERIAL,
+	name		TEXT NOT NULL, 
+	logo1Path	TEXT,
+	logo2Path	TEXT, 
+	apparel		JSONB, 
+	tactics		JSONB
+);
+
+CREATE TABLE teamscategories (
+	idteam  	INTEGER NOT NULL, 
+	idcategory	INTEGER NOT NULL
+);
+
+CREATE TABLE players (
+	id 			SERIAL, 
+	idUser		INTEGER,
+	idTeam 		INTEGER NOT NULL,
+	email		TEXT NOT NULL,
+	name		TEXT,
+	surname		TEXT,
+	phone		TEXT,
+	address		TEXT,
+	state		TEXT,
+	province	TEXT,
+	picturePath TEXT,
+	alias		TEXT, 
+	country		TEXT,
+	statusFlags INTEGER,
+	height		REAL,
+	weight		REAL,
+	fieldPosition 	INTEGER,
+	apparelNumber 	INTEGER
+);
+
+CREATE TABLE attachments (
+	id 			SERIAL,
+	path  		TEXT, 
+	description TEXT,
+	type 		INTEGER,
+	idPlayer	INTEGER
+);
+
+
+CREATE TABLE fields (
+	id 			SERIAL, 
+	name 		TEXT,
+	address		TEXT, 
+	picturePath	TEXT, 
+	location	TEXT, 
+	description TEXT
+);
+
+
+
+
+CREATE TABLE matches (
+	id 			SERIAL,
+	idField		INTEGER, 
+	startTime	TIMESTAMP WITH TIME ZONE,
+	idLocalTeam INTEGER,
+	idVisitorTeam 		INTEGER,
+	status 		INTEGER,
+	localTeamGoals 		INTEGER,
+	visitorTeamGoals 	INTEGER,
+	acta 		JSONB
+);
+
+CREATE TABLE matchevents (
+	id 			SERIAL, 
+	idPlayer 	INTEGER, 
+	idMatch		INTEGER, 
+	type		INTEGER, 
+	time 		REAL,
+	idReferee	INTEGER
+);
+
+
+
+CREATE UNIQUE INDEX attachment_id ON attachments(id);
+CREATE UNIQUE INDEX category_id ON categories(id);
+CREATE UNIQUE INDEX field_id ON fields(id);
+CREATE UNIQUE INDEX match_id ON matches(id);
+CREATE UNIQUE INDEX matchevent_id ON matchevents(id);
+CREATE UNIQUE INDEX player_id ON players(id);
+CREATE UNIQUE INDEX team_id ON teams(id);
+CREATE UNIQUE INDEX tournament_id ON tournaments(id);
+CREATE UNIQUE INDEX user_id ON users(id);
+
+
+
+-- CREATE USER aemf WITH PASSWORD 'aemf';
+-- GRANT ALL PRIVILEGES ON DATABASE aemf TO aemf;

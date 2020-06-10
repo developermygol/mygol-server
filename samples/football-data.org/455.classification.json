@@ -1,0 +1,654 @@
+{
+    "_links": {
+        "competition": {
+            "href": "http://api.football-data.org/v1/competitions/455"
+        },
+        "self": {
+            "href": "http://api.football-data.org/v1/competitions/455/leagueTable/?matchday=35"
+        }
+    },
+    "leagueCaption": "Primera Division 2017",
+    "matchday": 35,
+    "standing": [
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/81"
+                }
+            },
+            "away": {
+                "draws": 6,
+                "goals": 42,
+                "goalsAgainst": 13,
+                "losses": 0,
+                "wins": 12
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/a/aa/Fc_barcelona.svg",
+            "draws": 8,
+            "goalDifference": 66,
+            "goals": 87,
+            "goalsAgainst": 21,
+            "home": {
+                "draws": 2,
+                "goals": 45,
+                "goalsAgainst": 8,
+                "losses": 0,
+                "wins": 14
+            },
+            "losses": 0,
+            "playedGames": 34,
+            "points": 86,
+            "position": 1,
+            "teamName": "FC Barcelona",
+            "wins": 26
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/78"
+                }
+            },
+            "away": {
+                "draws": 4,
+                "goals": 27,
+                "goalsAgainst": 14,
+                "losses": 4,
+                "wins": 10
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/c/c1/Atletico_Madrid_logo.svg",
+            "draws": 9,
+            "goalDifference": 37,
+            "goals": 55,
+            "goalsAgainst": 18,
+            "home": {
+                "draws": 5,
+                "goals": 28,
+                "goalsAgainst": 4,
+                "losses": 0,
+                "wins": 12
+            },
+            "losses": 4,
+            "playedGames": 35,
+            "points": 75,
+            "position": 2,
+            "teamName": "Club Atlético de Madrid",
+            "wins": 22
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/86"
+                }
+            },
+            "away": {
+                "draws": 4,
+                "goals": 34,
+                "goalsAgainst": 17,
+                "losses": 2,
+                "wins": 10
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/3/3f/Real_Madrid_Logo.svg",
+            "draws": 8,
+            "goalDifference": 45,
+            "goals": 82,
+            "goalsAgainst": 37,
+            "home": {
+                "draws": 4,
+                "goals": 48,
+                "goalsAgainst": 20,
+                "losses": 3,
+                "wins": 11
+            },
+            "losses": 5,
+            "playedGames": 34,
+            "points": 71,
+            "position": 3,
+            "teamName": "Real Madrid CF",
+            "wins": 21
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/95"
+                }
+            },
+            "away": {
+                "draws": 4,
+                "goals": 28,
+                "goalsAgainst": 21,
+                "losses": 5,
+                "wins": 8
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/7/75/FC_Valencia.svg",
+            "draws": 7,
+            "goalDifference": 26,
+            "goals": 62,
+            "goalsAgainst": 36,
+            "home": {
+                "draws": 3,
+                "goals": 34,
+                "goalsAgainst": 15,
+                "losses": 3,
+                "wins": 12
+            },
+            "losses": 8,
+            "playedGames": 35,
+            "points": 67,
+            "position": 4,
+            "teamName": "Valencia CF",
+            "wins": 20
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/90"
+                }
+            },
+            "away": {
+                "draws": 2,
+                "goals": 23,
+                "goalsAgainst": 25,
+                "losses": 7,
+                "wins": 8
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/4/43/Real_Betis.svg",
+            "draws": 5,
+            "goalDifference": 2,
+            "goals": 56,
+            "goalsAgainst": 54,
+            "home": {
+                "draws": 3,
+                "goals": 33,
+                "goalsAgainst": 29,
+                "losses": 5,
+                "wins": 10
+            },
+            "losses": 12,
+            "playedGames": 35,
+            "points": 59,
+            "position": 5,
+            "teamName": "Real Betis",
+            "wins": 18
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/94"
+                }
+            },
+            "away": {
+                "draws": 4,
+                "goals": 17,
+                "goalsAgainst": 21,
+                "losses": 7,
+                "wins": 6
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/7/70/Villarreal_CF_logo.svg",
+            "draws": 6,
+            "goalDifference": 8,
+            "goals": 49,
+            "goalsAgainst": 41,
+            "home": {
+                "draws": 2,
+                "goals": 32,
+                "goalsAgainst": 20,
+                "losses": 5,
+                "wins": 10
+            },
+            "losses": 12,
+            "playedGames": 34,
+            "points": 54,
+            "position": 6,
+            "teamName": "Villarreal CF",
+            "wins": 16
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/82"
+                }
+            },
+            "away": {
+                "draws": 6,
+                "goals": 14,
+                "goalsAgainst": 20,
+                "losses": 7,
+                "wins": 4
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/d/de/Getafe_CF.svg",
+            "draws": 10,
+            "goalDifference": 8,
+            "goals": 40,
+            "goalsAgainst": 32,
+            "home": {
+                "draws": 4,
+                "goals": 26,
+                "goalsAgainst": 12,
+                "losses": 5,
+                "wins": 9
+            },
+            "losses": 12,
+            "playedGames": 35,
+            "points": 49,
+            "position": 7,
+            "teamName": "Getafe CF",
+            "wins": 13
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/298"
+                }
+            },
+            "away": {
+                "draws": 6,
+                "goals": 22,
+                "goalsAgainst": 36,
+                "losses": 7,
+                "wins": 5
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/en/9/90/For_article_Girona_FC.svg",
+            "draws": 9,
+            "goalDifference": -6,
+            "goals": 47,
+            "goalsAgainst": 53,
+            "home": {
+                "draws": 3,
+                "goals": 25,
+                "goalsAgainst": 17,
+                "losses": 6,
+                "wins": 8
+            },
+            "losses": 13,
+            "playedGames": 35,
+            "points": 48,
+            "position": 8,
+            "teamName": "Girona FC",
+            "wins": 13
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/559"
+                }
+            },
+            "away": {
+                "draws": 1,
+                "goals": 16,
+                "goalsAgainst": 34,
+                "losses": 11,
+                "wins": 6
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/en/8/86/Sevilla_cf_200px.png",
+            "draws": 6,
+            "goalDifference": -12,
+            "goals": 42,
+            "goalsAgainst": 54,
+            "home": {
+                "draws": 5,
+                "goals": 26,
+                "goalsAgainst": 20,
+                "losses": 3,
+                "wins": 8
+            },
+            "losses": 14,
+            "playedGames": 34,
+            "points": 48,
+            "position": 9,
+            "teamName": "Sevilla FC",
+            "wins": 14
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/92"
+                }
+            },
+            "away": {
+                "draws": 4,
+                "goals": 19,
+                "goalsAgainst": 28,
+                "losses": 9,
+                "wins": 4
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/5/55/Real_Sociedad_San_Sebastián.svg",
+            "draws": 7,
+            "goalDifference": 8,
+            "goals": 63,
+            "goalsAgainst": 55,
+            "home": {
+                "draws": 3,
+                "goals": 44,
+                "goalsAgainst": 27,
+                "losses": 6,
+                "wins": 9
+            },
+            "losses": 15,
+            "playedGames": 35,
+            "points": 46,
+            "position": 10,
+            "teamName": "Real Sociedad de Fútbol",
+            "wins": 13
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/558"
+                }
+            },
+            "away": {
+                "draws": 2,
+                "goals": 25,
+                "goalsAgainst": 31,
+                "losses": 11,
+                "wins": 5
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/0/0c/Celta_Vigo.svg",
+            "draws": 9,
+            "goalDifference": 3,
+            "goals": 54,
+            "goalsAgainst": 51,
+            "home": {
+                "draws": 7,
+                "goals": 29,
+                "goalsAgainst": 20,
+                "losses": 3,
+                "wins": 7
+            },
+            "losses": 14,
+            "playedGames": 35,
+            "points": 45,
+            "position": 11,
+            "teamName": "RC Celta de Vigo",
+            "wins": 12
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/278"
+                }
+            },
+            "away": {
+                "draws": 4,
+                "goals": 12,
+                "goalsAgainst": 28,
+                "losses": 8,
+                "wins": 5
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/en/7/75/SD_Eibar_logo.svg",
+            "draws": 8,
+            "goalDifference": -10,
+            "goals": 37,
+            "goalsAgainst": 47,
+            "home": {
+                "draws": 4,
+                "goals": 25,
+                "goalsAgainst": 19,
+                "losses": 7,
+                "wins": 7
+            },
+            "losses": 15,
+            "playedGames": 35,
+            "points": 44,
+            "position": 12,
+            "teamName": "SD Eibar",
+            "wins": 12
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/263"
+                }
+            },
+            "away": {
+                "draws": 1,
+                "goals": 16,
+                "goalsAgainst": 26,
+                "losses": 11,
+                "wins": 5
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/en/2/2e/Deportivo_Alaves_logo.svg",
+            "draws": 2,
+            "goalDifference": -14,
+            "goals": 34,
+            "goalsAgainst": 48,
+            "home": {
+                "draws": 1,
+                "goals": 18,
+                "goalsAgainst": 22,
+                "losses": 9,
+                "wins": 8
+            },
+            "losses": 20,
+            "playedGames": 35,
+            "points": 41,
+            "position": 13,
+            "teamName": "Deportivo Alavés",
+            "wins": 13
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/77"
+                }
+            },
+            "away": {
+                "draws": 5,
+                "goals": 21,
+                "goalsAgainst": 30,
+                "losses": 9,
+                "wins": 4
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/7/7f/Athletic_Club_Bilbao.svg",
+            "draws": 13,
+            "goalDifference": -7,
+            "goals": 38,
+            "goalsAgainst": 45,
+            "home": {
+                "draws": 8,
+                "goals": 17,
+                "goalsAgainst": 15,
+                "losses": 4,
+                "wins": 5
+            },
+            "losses": 13,
+            "playedGames": 35,
+            "points": 40,
+            "position": 14,
+            "teamName": "Athletic Club",
+            "wins": 9
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/80"
+                }
+            },
+            "away": {
+                "draws": 7,
+                "goals": 13,
+                "goalsAgainst": 26,
+                "losses": 8,
+                "wins": 2
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
+            "draws": 13,
+            "goalDifference": -12,
+            "goals": 29,
+            "goalsAgainst": 41,
+            "home": {
+                "draws": 6,
+                "goals": 16,
+                "goalsAgainst": 15,
+                "losses": 5,
+                "wins": 7
+            },
+            "losses": 13,
+            "playedGames": 35,
+            "points": 40,
+            "position": 15,
+            "teamName": "RCD Espanyol",
+            "wins": 9
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/745"
+                }
+            },
+            "away": {
+                "draws": 3,
+                "goals": 13,
+                "goalsAgainst": 29,
+                "losses": 12,
+                "wins": 3
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/en/thumb/0/02/Club_Deportivo_Leganés.png/180px-Club_Deportivo_Leganés.png",
+            "draws": 7,
+            "goalDifference": -14,
+            "goals": 29,
+            "goalsAgainst": 43,
+            "home": {
+                "draws": 4,
+                "goals": 16,
+                "goalsAgainst": 14,
+                "losses": 5,
+                "wins": 8
+            },
+            "losses": 17,
+            "playedGames": 35,
+            "points": 40,
+            "position": 16,
+            "teamName": "CD Leganes",
+            "wins": 11
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/88"
+                }
+            },
+            "away": {
+                "draws": 7,
+                "goals": 14,
+                "goalsAgainst": 26,
+                "losses": 7,
+                "wins": 3
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/1/1f/Levante_ud.svg",
+            "draws": 13,
+            "goalDifference": -16,
+            "goals": 34,
+            "goalsAgainst": 50,
+            "home": {
+                "draws": 6,
+                "goals": 20,
+                "goalsAgainst": 24,
+                "losses": 6,
+                "wins": 6
+            },
+            "losses": 13,
+            "playedGames": 35,
+            "points": 40,
+            "position": 17,
+            "teamName": "Levante UD",
+            "wins": 9
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/560"
+                }
+            },
+            "away": {
+                "draws": 4,
+                "goals": 14,
+                "goalsAgainst": 40,
+                "losses": 11,
+                "wins": 2
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/en/4/4e/RC_Deportivo_La_Coruña_logo.svg",
+            "draws": 10,
+            "goalDifference": -35,
+            "goals": 34,
+            "goalsAgainst": 69,
+            "home": {
+                "draws": 6,
+                "goals": 20,
+                "goalsAgainst": 29,
+                "losses": 8,
+                "wins": 4
+            },
+            "losses": 19,
+            "playedGames": 35,
+            "points": 28,
+            "position": 18,
+            "teamName": "RC Deportivo La Coruna",
+            "wins": 6
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/275"
+                }
+            },
+            "away": {
+                "draws": 5,
+                "goals": 9,
+                "goalsAgainst": 35,
+                "losses": 12,
+                "wins": 1
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/en/2/20/UD_Las_Palmas_logo.svg",
+            "draws": 7,
+            "goalDifference": -47,
+            "goals": 23,
+            "goalsAgainst": 70,
+            "home": {
+                "draws": 2,
+                "goals": 14,
+                "goalsAgainst": 35,
+                "losses": 11,
+                "wins": 4
+            },
+            "losses": 23,
+            "playedGames": 35,
+            "points": 22,
+            "position": 19,
+            "teamName": "UD Las Palmas",
+            "wins": 5
+        },
+        {
+            "_links": {
+                "team": {
+                    "href": "http://api.football-data.org/v1/teams/84"
+                }
+            },
+            "away": {
+                "draws": 2,
+                "goals": 9,
+                "goalsAgainst": 30,
+                "losses": 15,
+                "wins": 1
+            },
+            "crestURI": "http://upload.wikimedia.org/wikipedia/de/e/e8/FC_Málaga.svg",
+            "draws": 5,
+            "goalDifference": -30,
+            "goals": 23,
+            "goalsAgainst": 53,
+            "home": {
+                "draws": 3,
+                "goals": 14,
+                "goalsAgainst": 23,
+                "losses": 10,
+                "wins": 4
+            },
+            "losses": 25,
+            "playedGames": 35,
+            "points": 20,
+            "position": 20,
+            "teamName": "Málaga CF",
+            "wins": 5
+        }
+    ]
+}

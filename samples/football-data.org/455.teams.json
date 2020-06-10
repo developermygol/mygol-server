@@ -1,0 +1,373 @@
+{
+    "_links": {
+        "competition": {
+            "href": "http://api.football-data.org/v1/competitions/455"
+        },
+        "self": {
+            "href": "http://api.football-data.org/v1/competitions/455/teams"
+        }
+    },
+    "count": 20,
+    "teams": [
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/745/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/745/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/745"
+                }
+            },
+            "code": "LEG",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/en/thumb/0/02/Club_Deportivo_Leganés.png/180px-Club_Deportivo_Leganés.png",
+            "name": "CD Leganes",
+            "shortName": "Leganes",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/263/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/263/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/263"
+                }
+            },
+            "code": "ALA",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/en/2/2e/Deportivo_Alaves_logo.svg",
+            "name": "Deportivo Alavés",
+            "shortName": "Alaves",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/95/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/95/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/95"
+                }
+            },
+            "code": "VAL",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/7/75/FC_Valencia.svg",
+            "name": "Valencia CF",
+            "shortName": "Valencia",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/275/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/275/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/275"
+                }
+            },
+            "code": "LPA",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/en/2/20/UD_Las_Palmas_logo.svg",
+            "name": "UD Las Palmas",
+            "shortName": "Las Palmas",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/558/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/558/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/558"
+                }
+            },
+            "code": "VIG",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/0/0c/Celta_Vigo.svg",
+            "name": "RC Celta de Vigo",
+            "shortName": "Celta Vigo",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/92/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/92/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/92"
+                }
+            },
+            "code": "RSS",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/5/55/Real_Sociedad_San_Sebastián.svg",
+            "name": "Real Sociedad de Fútbol",
+            "shortName": "Real Sociedad",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/298/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/298/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/298"
+                }
+            },
+            "code": "GFC",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/en/9/90/For_article_Girona_FC.svg",
+            "name": "Girona FC",
+            "shortName": "Girona",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/78/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/78/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/78"
+                }
+            },
+            "code": "ATM",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/c/c1/Atletico_Madrid_logo.svg",
+            "name": "Club Atlético de Madrid",
+            "shortName": "Atlético",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/559/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/559/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/559"
+                }
+            },
+            "code": "SEV",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/en/8/86/Sevilla_cf_200px.png",
+            "name": "Sevilla FC",
+            "shortName": "Sevilla",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/80/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/80/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/80"
+                }
+            },
+            "code": "ESP",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/a/a7/RCD_Espanyol_De_Barcelona.svg",
+            "name": "RCD Espanyol",
+            "shortName": "Espanyol",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/77/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/77/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/77"
+                }
+            },
+            "code": "BIL",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/7/7f/Athletic_Club_Bilbao.svg",
+            "name": "Athletic Club",
+            "shortName": "Athletic",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/82/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/82/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/82"
+                }
+            },
+            "code": "FCG",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/d/de/Getafe_CF.svg",
+            "name": "Getafe CF",
+            "shortName": "Getafe",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/81/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/81/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/81"
+                }
+            },
+            "code": "FCB",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/a/aa/Fc_barcelona.svg",
+            "name": "FC Barcelona",
+            "shortName": "Barcelona",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/90/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/90/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/90"
+                }
+            },
+            "code": "BET",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/4/43/Real_Betis.svg",
+            "name": "Real Betis",
+            "shortName": "Betis",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/560/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/560/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/560"
+                }
+            },
+            "code": "LAC",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/en/4/4e/RC_Deportivo_La_Coruña_logo.svg",
+            "name": "RC Deportivo La Coruna",
+            "shortName": "Deportivo",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/86/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/86/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/86"
+                }
+            },
+            "code": "MAD",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/3/3f/Real_Madrid_Logo.svg",
+            "name": "Real Madrid CF",
+            "shortName": "Real Madrid",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/88/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/88/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/88"
+                }
+            },
+            "code": "LUD",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/1/1f/Levante_ud.svg",
+            "name": "Levante UD",
+            "shortName": "Levante",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/94/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/94/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/94"
+                }
+            },
+            "code": "VCF",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/7/70/Villarreal_CF_logo.svg",
+            "name": "Villarreal CF",
+            "shortName": "Villareal",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/84/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/84/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/84"
+                }
+            },
+            "code": "MAL",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/de/e/e8/FC_Málaga.svg",
+            "name": "Málaga CF",
+            "shortName": "Málaga",
+            "squadMarketValue": null
+        },
+        {
+            "_links": {
+                "fixtures": {
+                    "href": "http://api.football-data.org/v1/teams/278/fixtures"
+                },
+                "players": {
+                    "href": "http://api.football-data.org/v1/teams/278/players"
+                },
+                "self": {
+                    "href": "http://api.football-data.org/v1/teams/278"
+                }
+            },
+            "code": "EIB",
+            "crestUrl": "http://upload.wikimedia.org/wikipedia/en/7/75/SD_Eibar_logo.svg",
+            "name": "SD Eibar",
+            "shortName": "Eibar",
+            "squadMarketValue": null
+        }
+    ]
+}

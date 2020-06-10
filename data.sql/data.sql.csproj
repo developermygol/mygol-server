@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>data.sql</AssemblyName>
+    <PackageId>sqlDataProvider</PackageId>
+    <NetStandardImplicitPackageVersion>2.0.1</NetStandardImplicitPackageVersion>
+    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="old\**" />
+    <EmbeddedResource Remove="old\**" />
+    <None Remove="old\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="DatabaseUpdater.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="3.2.5" />
+    <PackageReference Include="System.Data.Common" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\commonUtils\commonUtils.csproj" />
+    <ProjectReference Include="..\logger\logger.csproj" />
+    <ProjectReference Include="..\webappModels\webappModels.csproj" />
+  </ItemGroup>
+
+</Project>
