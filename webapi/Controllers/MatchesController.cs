@@ -89,7 +89,26 @@ namespace webapi.Controllers
                 return true;
             });
         }
+                public override IActionResult Delete([FromBody] Match value)
+        {
+            return DbTransaction((c, t) =>
+            {
+                if (value == null) throw new NoDataException();
 
+                Audit.Information(this, "{0}: Match.Delete: {1}", GetUserId(), value.Id);
+
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                if (!ValidateDelete(value, c, t)) throw new Exception(ValidationError);
+
+                var dbMatch = c.Get<Match>(value.Id);
+                if (dbMatch == null) throw new Exception("Error.NotFound");
+
+                var result = c.Delete(value, t);
+
+                return true;
+            });
+        }
 
         [HttpGet("forgroup/{idGroup}")]
         public IActionResult MatchesForGroup(long idGroup)
@@ -417,6 +436,52 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPost("setplayermatchapparelnumber")]
+        public IActionResult SetPlayerMatchApparelNumber([FromBody] PlayerAttendance playerAttendance) 
+        {
+            // REFACTOR merge with setplayerattendance
+            return DbTransaction((c, t) =>
+            {
+                if (!IsOrganizationAdmin() && !IsRefereeForMatch(c, t, playerAttendance.IdMatch)) throw new UnauthorizedAccessException();
+
+                if (!CanRefereeModifyMatch(c, t, playerAttendance.IdMatch)) throw new Exception("Error.MatchIsClosed");
+
+                var mr = c.QueryMultiple(@"
+                        SELECT apparelNumber FROM teamPlayers WHERE idplayer = @idPlayer AND idTeam = @idTeam;
+                        SELECT id, idUser FROM players WHERE id = @idPlayer;
+                        SELECT * FROM matchplayers WHERE idMatch = @idMatch AND idPlayer = @idPlayer AND idTeam = @idTeam;
+                        ", playerAttendance, t);
+
+                var teamPlayer = mr.Read<TeamPlayer>().GetSingle();
+                var player = mr.Read<Player>().GetSingle();
+
+                var matchPlayer = mr.ReadFirstOrDefault<MatchPlayer>();
+                if (matchPlayer == null)
+                {
+                    // not found, insert
+                    matchPlayer = new MatchPlayer
+                    {
+                        IdTeam = playerAttendance.IdTeam,
+                        IdPlayer = playerAttendance.IdPlayer,
+                        IdUser = playerAttendance.IdUser,
+                        IdDay = playerAttendance.IdDay,
+                        IdMatch = playerAttendance.IdMatch,
+                        Status = playerAttendance.Attended ? 1 : 0 ,
+                        ApparelNumber = playerAttendance.ApparelNumber
+                    };
+                    c.Insert(matchPlayer, t);
+                }
+                else
+                {
+                    // already exists, update
+                    matchPlayer.ApparelNumber = playerAttendance.ApparelNumber;
+                    c.Update(matchPlayer, t);
+                }
+
+                return true;
+            });
+        }
+
         [HttpPost("setplayerattendance")]
         public IActionResult SetPlayerAttendance([FromBody] PlayerAttendance playerAttendance)
         {
@@ -530,7 +595,10 @@ namespace webapi.Controllers
             var numEvents = c.ExecuteScalar<int>("SELECT COUNT(*) FROM matchEvents WHERE idMatch = @id", new { id = value.Id }, t);
             if (numEvents > 0) throw new Exception("Error.MatchHasEvents");
 
-            var numSanctions = c.ExecuteScalar<int>("SELECT COUNT(*) FROM matchSanctions WHERE idMatch = @id", new { id = value.Id }, t);
+            // var numSanctions = c.ExecuteScalar<int>("SELECT COUNT(*) FROM matchSanctions WHERE idMatch = @id", new { id = value.Id }, t);
+            // changet table name matchSanctions => sanctionmatches
+            var numSanctions = c.ExecuteScalar<int>("SELECT COUNT(*) FROM sanctionmatches WHERE idMatch = @id", new { id = value.Id }, t);
+
             if (numSanctions > 0) throw new Exception("Error.MatchHasSanctions");
 
             return true;
@@ -624,11 +692,10 @@ namespace webapi.Controllers
 
 
         private static IEnumerable<Player> GetTeamPlayersForMatch(IDbConnection c, long idMatch, long idTeam, long idDay, bool canHaveIdPhoto)
-        {
-
+        {   
             var sql = @"
                 SELECT 
-                    p.id, p.name, p.surname, p.idUser, p.birthdate, p.idPhotoImgUrl, sm.idsanction,
+                    p.id, p.name, p.surname, p.idUser, p.birthdate, p.idPhotoImgUrl, sm.idsanction, s.idTeam AS idSanctionTeam,
                     tp.idteam, tp.apparelnumber,
                     mp.*,
                     u.id, u.avatarImgUrl,
@@ -639,6 +706,7 @@ namespace webapi.Controllers
                      LEFT JOIN matchplayers mp ON mp.idPlayer = tp.idPlayer AND mp.idMatch = @idMatch
                      LEFT JOIN playerdayresults pdr ON p.id = pdr.idPlayer AND pdr.idDay = @idDay AND pdr.idteam = @idTeam
                      LEFT JOIN sanctionmatches sm ON sm.idMatch = @idMatch AND sm.idPlayer = p.id
+                     LEFT JOIN sanctions s ON s.id = sm.idSanction
                 WHERE 
                       tp.idTeam = @idTeam
                 ORDER BY 

@@ -238,3 +238,4 @@ _Pvt_Extensions
 webapi/appsettings.local.json
 /webapi/organizations.json*
 /webapi/appsettings.json*
+/webapi/mygolcli.json*

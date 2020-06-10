@@ -55,7 +55,7 @@ namespace webapi.Models.Db
         [Write(false)] public string FichaPictureImgUrl { get; set; }
         [Write(false)] public IEnumerable<Sanction> Sanctions { get; set; }
         [Write(false)] public long? IdSanction { get; set; }
-        
+        [Write(false)] public long? IdSanctionTeam { get; set; }
 
         public string GetName()
         {
