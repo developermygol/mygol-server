@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Dapper.Contrib.Extensions;
+using Newtonsoft.Json;
 
 namespace webapi.Models.Db
 {
@@ -399,6 +400,8 @@ namespace webapi.Models.Db
 
             var matches = await c.QueryAsync<Match>("SELECT * FROM matches WHERE idTournament = @id AND status = @status ORDER BY starttime", parameters, t);
 
+            // 💥 tournamentPoints are been lost wen recalaculating it is not adding sanctions
+
             var ev = new MatchEvent();
 
             foreach (var m in matches)
@@ -595,6 +598,18 @@ namespace webapi.Models.Db
                 visitorDelta.GamesWon++;
                 visitorDelta.TournamentPoints += TournamentPointsForWinning;
             }
+
+            // 🚧🚧🚧 Get match sanctions 
+            match.SanctionsMatch = GetSanctionsMatch(c, match.Id);
+            if (match.SanctionsMatch != null)
+            {
+                foreach (var sanction in match.SanctionsMatch)
+                {
+                    // 🚧 Recalculate TeamSanctions  
+                    CreateTeamSanctionPenalty(c, t, sanction);
+                }
+            }
+            // 🚧🚧🚧
 
             // Update home team
             ev.IdTeam = match.IdHomeTeam;
@@ -857,6 +872,142 @@ namespace webapi.Models.Db
             return dbMatch;
         }
 
+        // 🚧🚧🚧 Refarctor duplicity between controllers and Models
+        private static IEnumerable<Sanction> GetSanctionsMatch(IDbConnection c, long idMatch)
+        {
+            return c.Query<Sanction>("SELECT * FROM sanctions WHERE idMatch = @idMatch", new { idMatch = idMatch });
+        }
+        public static void CreateTeamSanctionPenalty(IDbConnection c, IDbTransaction t, Sanction sanction)
+        {
+            var eventsToCreate = new List<MatchEvent>();
+
+            // lost match penalty
+            if (sanction.LostMatchPenalty > 0)
+            {
+                // retrieve the match, if the team is winner, add match events for losing
+                var match = c.Get<Match>(sanction.IdMatch);
+                if (match == null) return;
+
+                var lostMatchEvents = GetLostMatchEvents(match, sanction.IdTeam);
+                if (lostMatchEvents != null) eventsToCreate.AddRange(lostMatchEvents);
+            }
+
+            // tournament points penalty
+            if (sanction.TournamentPointsPenalty > 0)
+            {
+                eventsToCreate.Add(new MatchEvent
+                {
+                    Type = (int)MatchEventType.ChangeTeamStats,
+                    IntData1 = -sanction.TournamentPointsPenalty,
+                    IdMatch = sanction.IdMatch,
+                    IdTeam = sanction.IdTeam,
+                    MatchMinute = 200,
+                    IsAutomatic = true
+                });
+            }
+
+            var createdEventIds = CreateMatchEvents(c, t, eventsToCreate);
+
+            UpdateSanctionMatchEvents(c, t, sanction, createdEventIds);
+        }
+
+        public static void UpdateSanctionMatchEvents(IDbConnection c, IDbTransaction t, Sanction sanction, IEnumerable<long> eventIds)
+        {
+            sanction.SanctionMatchEvents = JsonConvert.SerializeObject(eventIds);
+            c.Update(sanction, t);
+        }
+
+        public static IEnumerable<long> CreateMatchEvents(IDbConnection c, IDbTransaction t, IEnumerable<MatchEvent> events)
+        {
+            var result = new List<long>();
+
+            if (events != null)
+            {
+                foreach (var ev in events)
+                {
+                    var (_, me) = MatchEvent.Create(c, t, ev);
+                    result.Add(me.Id);
+                }
+            }
+
+            return result;
+        }
+        
+        public static IEnumerable<MatchEvent> GetLostMatchEvents(Match m, long idTeam)
+        {
+            var isHomeTeam = (idTeam == m.IdHomeTeam);
+            var isDraw = m.HomeScore == m.VisitorScore;
+            var homeWon = m.HomeScore > m.VisitorScore;
+            var homeLost = !homeWon;
+
+            const int win = MatchEvent.TournamentPointsForWinning;
+            const int draw = MatchEvent.TournamentPointsForDraw;
+
+            if (isHomeTeam)
+            {
+                // sanctioned team is home
+                if (homeWon)
+                {
+                    // sanctioned team won the match, create events to compensate victory
+                    return CreateCompensationEvents(m, m.IdHomeTeam, m.IdVisitorTeam, -win, win, -1, 1, 0, 0, 1, -1);
+                }
+                else if (isDraw)
+                {
+                    // remove 1 point from home, add 2 to visitor
+                    return CreateCompensationEvents(m, m.IdHomeTeam, m.IdVisitorTeam, -draw, win - draw, 0, 1, -1, -1, 1, 0);
+                }
+            }
+            else
+            {
+                // sanctioned team is visitor
+                if (isDraw)
+                {
+                    // remove 1 point from visitor, add 2 to home
+                    return CreateCompensationEvents(m, m.IdHomeTeam, m.IdVisitorTeam, win - draw, -draw, 1, 0, -1, -1, 0, 1);
+                }
+                else if (!homeWon)
+                {
+                    // sanctioned team (visitor) won the match, create events to compensate victory
+                    return CreateCompensationEvents(m, m.IdHomeTeam, m.IdVisitorTeam, win, -win, 1, -1, 0, 0, -1, 1);
+                }
+            }
+
+            return null;
+        }
+        
+        private static IEnumerable<MatchEvent> CreateCompensationEvents(Match m, long idTeam1, long idTeam2, int points1, int points2, int gamesWon1, int gamesWon2, int gamesDraw1, int gamesDraw2, int gamesLost1, int gamesLost2)
+        {
+            var result = new List<MatchEvent>();
+
+            result.Add(new MatchEvent
+            {
+                Type = (int)MatchEventType.ChangeTeamStats,
+                IntData1 = points1,
+                IntData2 = gamesWon1,
+                IntData3 = gamesDraw1,
+                IntData4 = gamesLost1,
+                IdMatch = m.Id,
+                IdTeam = idTeam1,
+                MatchMinute = 200,
+                IsAutomatic = true
+            });
+
+            result.Add(new MatchEvent
+            {
+                Type = (int)MatchEventType.ChangeTeamStats,
+                IntData1 = points2,
+                IntData2 = gamesWon2,
+                IntData3 = gamesDraw2,
+                IntData4 = gamesLost2,
+                IdMatch = m.Id,
+                IdTeam = idTeam2,
+                MatchMinute = 200,
+                IsAutomatic = true
+            });
+
+            return result;
+        }
+        // 🚧🚧🚧
 
         private static void UpdateOrInsert<T>(IDbConnection c, IDbTransaction t, Action<T> callback, T target, bool isNew) where T: class
         {

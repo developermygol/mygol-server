@@ -47,6 +47,7 @@ namespace webapi.Controllers
                 match.VisitorTeam = GetTeam(c, match.IdVisitorTeam);
                 match.Field = GetField(c, match.IdField);
                 match.Day = GetPlayDay(c, match.IdDay);
+                match.SanctionsMatch = GetSanctionsMatch(c, match.Id);
 
                 return match;
             });
@@ -748,6 +749,12 @@ namespace webapi.Controllers
         private static IEnumerable<MatchEvent> GetEvents(IDbConnection c, long idMatch)
         {
             return c.Query<MatchEvent>("SELECT * FROM matchevents WHERE idMatch = @idMatch ORDER BY matchMinute DESC, timeStamp DESC", new { idMatch = idMatch });
+        }
+
+        // 🚧🚧🚧
+        private static IEnumerable<Sanction> GetSanctionsMatch(IDbConnection c, long idMatch)
+        {
+            return c.Query<Sanction>("SELECT * FROM sanctions WHERE idMatch = @idMatch", new { idMatch = idMatch });
         }
 
         private static Team GetTeam(IDbConnection c, long idTeam)

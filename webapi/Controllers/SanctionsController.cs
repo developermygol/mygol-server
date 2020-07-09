@@ -215,6 +215,7 @@ namespace webapi.Controllers
             if (value.Type == (int)SanctionType.Team)
             {
                 // Apply penalty for team: tournament points
+                // MatchEvent.CreateTeamSanctionPenalty(c, t, value); // 🚧TODO: Migrate duplicate functions to matchEvent* 
                 CreateTeamSanctionPenalty(c, t, value);
                 FillSanctionTeam(c, t, value);
             }

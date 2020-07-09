@@ -38,6 +38,7 @@ namespace webapi.Models.Db
         [Write(false)] public IEnumerable<MatchReferee> Referees { get; set; }
         [Write(false)] public IEnumerable<MatchEvent> Events { get; set; }
         [Write(false)] public Tournament Tournament { get; set; }
+        [Write(false)] public IEnumerable<Sanction> SanctionsMatch { get; set; } // 🚧🚧🚧
 
         public bool IsScheduled()
         {
