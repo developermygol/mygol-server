@@ -87,6 +87,16 @@ namespace webapi.Controllers
 
                 c.Update(dbPlayer, t);
 
+                // Get current team
+                var dbTeamPlayer = GetTeamPlayer(c, t, enroll.IdTeam);
+                if(dbTeamPlayer != null)
+                {
+                    // TeamPlayer fields
+                    dbTeamPlayer.FieldPosition = enroll.FieldPosition;
+                    dbTeamPlayer.FieldSide = enroll.FieldSide;
+                    c.Update(dbTeamPlayer, t);
+                }
+
                 result = 2;
             }
 
@@ -409,6 +419,8 @@ namespace webapi.Controllers
         public string Country { get; set; }
         public string IdCardNumber { get; set; }
         public DateTime BirthDate { get; set; }
+        public int FieldPosition { get; set; }
+        public int FieldSide { get; set; }
         public string Password { get; set; }
 
         // Step 3
@@ -436,9 +448,7 @@ namespace webapi.Controllers
         public string Motto { get; set; }
         public string FacebookKey { get; set; }
         public string InstagramKey { get; set; }
-        public string TwitterKey { get; set; }
-
-
+        public string TwitterKey { get; set; }        
     }
 
 
