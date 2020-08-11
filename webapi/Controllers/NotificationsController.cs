@@ -57,6 +57,34 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPost("markunread/{id}")]
+        public IActionResult MarkUnRead(long id)
+        {
+            return DbOperation(c =>
+            {
+                if (!IsLoggedIn()) throw new UnauthorizedAccessException();
+
+                c.Execute("UPDATE notifications SET status = @status WHERE id = @id AND idRcptUser = @idUser",
+                    new { status = (int)NotificationStatus.Unread, idUser = GetUserId(), id = id });
+
+                return true;
+            });
+        }
+
+        [HttpPost("markdeleted/{id}")]
+        public IActionResult MarkDeleted(long id)
+        {
+            return DbOperation(c =>
+            {
+                if (!IsLoggedIn()) throw new UnauthorizedAccessException();
+
+                c.Execute("UPDATE notifications SET status = @status WHERE id = @id AND idRcptUser = @idUser",
+                    new { status = (int)NotificationStatus.Deleted, idUser = GetUserId(), id = id });
+
+                return true;
+            });
+        }
+
 
         // __ Push notifications ______________________________________________
 
@@ -71,7 +99,16 @@ namespace webapi.Controllers
             {
                 Audit.Information(this, "{0}: Notifications.NotifyOrganization: {1} | {2}", GetUserId(), payload.Title, payload.Message);
 
-                return NotifyOrganization(c, null, payload.Title, payload.Message);
+                int notificationsNumber = NotifyOrganization(c, null, payload.Title, payload.Message);
+
+                var organitzationPlayers = c.Query<Player>("SELECT id, iduser FROM players");
+
+                foreach (var player in organitzationPlayers)
+                {
+                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+                }
+
+                return notificationsNumber;
             });
         }
 
@@ -85,7 +122,16 @@ namespace webapi.Controllers
             {
                 Audit.Information(this, "{0}: Notifications.NotifyOrganization: {1} | {2}", GetUserId(), payload.Title, payload.Message);
 
-                return NotifyTournament(c, null, payload.Id, payload.Title, payload.Message);
+                int notificationsNumber = NotifyTournament(c, null, payload.Id, payload.Title, payload.Message);
+
+                var tournamentPlayers = c.Query<Player>("SELECT p.id, p.iduser FROM tournamentTeams tt JOIN teamPlayers tp ON tt.idTeam = tp.idTeam JOIN players p ON tp.idPlayer = p.id WHERE tt.idTournament = @id", new { id = payload.Id });
+
+                foreach (var player in tournamentPlayers)
+                {
+                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+                }
+
+                return notificationsNumber;
             });
         }
 
@@ -99,7 +145,16 @@ namespace webapi.Controllers
             {
                 Audit.Information(this, "{0}: Notifications.NotifyTeam: {1} | {2}", GetUserId(), payload.Title, payload.Message);
 
-                return NotifyTeam(c, null, payload.Id, payload.Title, payload.Message);
+                int notificationsNumber = NotifyTeam(c, null, payload.Id, payload.Title, payload.Message);
+
+                var teamPlayers = c.Query<Player>("SELECT tp.idplayer, p.id, p.iduser FROM teamplayers tp JOIN players p ON tp.idPlayer = p.id WHERE idTeam = @id", new { id = payload.Id });                
+
+                foreach (var player in teamPlayers)
+                {
+                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+                }
+
+                return notificationsNumber;
             });
         }
 
@@ -111,9 +166,14 @@ namespace webapi.Controllers
 
             return DbOperation(c =>
             {
+                
                 Audit.Information(this, "{0}: Notifications.NotifyUser: {1} | {2}", GetUserId(), payload.Title, payload.Message);
+                
+                int notificationsNumber = NotifyUser(c, null, payload.Id, payload.Title, payload.Message);
 
-                return NotifyUser(c, null, payload.Id, payload.Title, payload.Message);
+                c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = payload.Id, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+
+                return notificationsNumber;
             });
         }
 
@@ -138,7 +198,10 @@ namespace webapi.Controllers
             var users = c.Query<User>("SELECT devicetoken FROM users u JOIN userdevices ud ON ud.idUser = u.id WHERE u.id = @id", new { id = idUser });
             if (users.Count() == 0) throw new DataException("Error.UserNotFound", idUser.ToString());
 
-            return NotifyUsers(users, title, message);
+            int usersNotified = NotifyUsers(users, title, message);
+
+
+            return usersNotified;
         }
 
         public static int TryNotifyUser(IDbConnection c, IDbTransaction t, long idUser, string title, string message)
@@ -191,8 +254,6 @@ namespace webapi.Controllers
 
             return notifications.Count;
         }
-
-
     }
 
 

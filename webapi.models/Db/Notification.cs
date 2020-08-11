@@ -16,6 +16,7 @@ namespace webapi.Models.Db
         public DateTime TimeStamp { get; set; }
         public string Text { get; set; }
         public string Text2 { get; set; }
+        public string Text3 { get; set; }
         public string Data1 { get; set; }
         public string Data2 { get; set; }
 
@@ -49,7 +50,8 @@ namespace webapi.Models.Db
         Sent = 2,
         Delivered = 3, 
         Unread = 4,
-        Read = 5
+        Read = 5,
+        Deleted = 6
     }
 
     public class BaseTemplateData
