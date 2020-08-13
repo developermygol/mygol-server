@@ -22,7 +22,8 @@ namespace webapi.Models.Db
         public string TeamImgUrl2 { get; set; }
         public string TeamImgUrl3 { get; set; }
         public DateTime? PrefTime { get; set; }
-
+        public int IdGoalKeeper { get; set; }
+        
         [Write(false)] public TeamPlayer TeamData { get; set; }     // Move this to Players.Teams. Only used in player details. TeamPlayer may have a Team field
         [Write(false)] public IEnumerable<Player> Players { get; set; } // Team players in the selected tournament
         [Write(false)] public IEnumerable<PlayDay> Days { get; set; }

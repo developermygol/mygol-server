@@ -203,6 +203,72 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpGet("{idTournament}/ranking/goalkeepers/{type}/{limit:long?}")]
+        public IActionResult GetGoalKeeperRanking(long idTournament, long type, long limit = -1)
+        {
+            if (limit == -1) limit = RankingDefaultNumberOfResults;
+
+            return DbOperation(c =>
+            {
+                string query = null;
+
+                // Type is how the data is grouped: 1 tournament, 2 stages, 3 groups
+                switch (type)
+                {
+                    case 1:
+                        query = @"
+                        SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
+                        FROM (
+	                        SELECT idteam, SUM(pointsagainst) AS pointsagainst
+	                        FROM teamdayresults
+	                        WHERE idTournament = @idTournament AND pointsagainst > 0
+	                        GROUP BY idTeam
+                        ) t 
+                        JOIN teams t2 ON t2.id = t.idteam
+                        JOIN players p ON t2.idgoalkeeper = p.id
+                        JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
+                        ORDER BY pointsagainst DESC
+                        LIMIT @limit";
+                        break;
+                    case 2:
+                        query = @"
+                        SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
+                        FROM (
+	                        SELECT idteam, idStage, SUM(pointsagainst) AS pointsagainst
+	                        FROM teamdayresults
+	                        WHERE idTournament = @idTournament AND pointsagainst > 0
+	                        GROUP BY idTeam, idStage
+                        ) t 
+                        JOIN teams t2 ON t2.id = t.idteam
+                        JOIN players p ON t2.idgoalkeeper = p.id
+                        JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
+                        ORDER BY pointsagainst DESC
+                        LIMIT @limit";
+                        break;
+                    case 3:
+                        query = @"
+                        SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
+                        FROM (
+	                        SELECT idteam, idStage, idGroup, SUM(pointsagainst) AS pointsagainst
+	                        FROM teamdayresults
+	                        WHERE idTournament = @idTournament AND pointsagainst > 0
+	                        GROUP BY idTeam, idStage, idGroup
+                        ) t 
+                        JOIN teams t2 ON t2.id = t.idteam
+                        JOIN players p ON t2.idgoalkeeper = p.id
+                        JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
+                        ORDER BY pointsagainst DESC
+                        LIMIT @limit";
+                        break;
+                    default:
+                        throw new Exception("Error.InvalidRankType");
+                }
+
+                var result = c.Query<PlayerDayResult>(query, new { idTournament = idTournament, limit = limit });
+
+                return result;
+            });
+        }
 
         private Tournament GetOrgAdminTournamentData(IDbConnection c, long id)
         {
