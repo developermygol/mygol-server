@@ -81,6 +81,8 @@ namespace webapi.Models.Db
         public int Data3 { get; set; }
         public int Data4 { get; set; }
         public int Data5 { get; set; }
+        public int Assistances { get; set; }
+        public int MVPPoints { get; set; }
 
         [Write(false)] public string PlayerName { get; set; }
         [Write(false)] public string PlayerSurname { get; set; }

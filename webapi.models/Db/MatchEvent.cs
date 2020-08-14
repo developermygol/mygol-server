@@ -96,7 +96,6 @@ namespace webapi.Models.Db
                                 m.HomeScore++;
                         }, insertEvent: insertEvent);
                     break;
-
                 case MatchEventType.MatchStarted:
                     match = ApplyStatsChange(c, tr, ev, null, null, null, null, m => m.Status = (int)MatchStatus.Playing, null, false, insertEvent: insertEvent);
                     break;
@@ -126,8 +125,7 @@ namespace webapi.Models.Db
                     break;
 
                 case MatchEventType.Assist:
-                    // TODO: Still no field in the table, I need to add it (not just record the matchevent)
-                    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.Assistances++, null, null, null, insertEvent: insertEvent);
                     break;
                 case MatchEventType.Corner:
                     match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
@@ -168,8 +166,12 @@ namespace webapi.Models.Db
                     match = ApplyStatsChange(c, tr, ev, null, p => p.CardsType5++, insertEvent: insertEvent);
                     break;
 
-                case MatchEventType.MVP:
-                    match = ApplyStatsChange(c, tr, ev, null, null, insertEvent: insertEvent);
+                case MatchEventType.MVP:                    
+                    match = ApplyStatsChange(c, tr, ev, null, p => {
+                        bool MPVLimitExided = p.MVPPoints > 0;
+                        if (MPVLimitExided) throw new Exception("Error.MVPAlreadyExists");
+                        p.MVPPoints++;
+                    }, null, null, null, insertEvent: insertEvent);
                     AddMvpAward(c, tr, match, ev);
                     break;
 
@@ -272,10 +274,10 @@ namespace webapi.Models.Db
                 //    match = ApplyStatsChange(c, tr, ev, checkTeams: false, insertEvent: insertEvent);
                 //    break;
 
-                //case MatchEventType.Assist:
-                //    // TODO: Still no field in the table, I need to add it (not just record the matchevent)
-                //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
-                //    break;
+                case MatchEventType.Assist:
+                    // TODO: Still no field in the table, I need to add it (not just record the matchevent)
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.Assistances--, null, null, null, insertEvent: insertEvent);
+                    break;
                 //case MatchEventType.Corner:
                 //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
                 //    break;
@@ -315,8 +317,8 @@ namespace webapi.Models.Db
                     match = ApplyStatsChange(c, tr, ev, null, p => p.CardsType5--, insertEvent: insertEvent);
                     break;
 
-                case MatchEventType.MVP:
-                    match = ApplyStatsChange(c, tr, ev, null, null, insertEvent: insertEvent);
+                case MatchEventType.MVP:                    
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.MVPPoints--, null, null, null, insertEvent: insertEvent);
                     RemoveMvpAward(c, tr, match, ev);
                     break;
 
@@ -456,10 +458,10 @@ namespace webapi.Models.Db
                 "DELETE FROM awards WHERE idPlayer = @idPlayer AND idDay = @idDay AND type = @type AND idTournament = @idTournament",
                 new { idDay = match.IdDay, idPlayer = ev.IdPlayer, idTournament = match.IdTournament, type = (int)AwardType.MVP }, t);
 
-            if (result != 1) throw new Exception("Error.CantLocateSpecificAward");
+            if (result != 1) throw new Exception("Error.CantLocateSpecificAward"); // Limit to one MVP x player x day
         }
 
-
+               
         // __ Record closed ___________________________________________________
 
 

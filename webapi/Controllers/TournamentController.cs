@@ -153,44 +153,47 @@ namespace webapi.Controllers
                     case 1: query = @"
                         SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
                         FROM (
-	                        SELECT idPlayer, idTeam, SUM(points) AS points
+	                        SELECT idPlayer, idTeam, SUM(gamesplayed) AS gamesplayed, SUM(points) AS points
 	                        FROM playerDayResults 
-	                        WHERE idTournament = @idTournament AND points > 0
+	                        WHERE idTournament = @idTournament
 	                        GROUP BY idPlayer, idTeam
                         ) AS r 
                         JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
                         JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
                         JOIN players p ON r.idPlayer = p.id
-                        ORDER BY points DESC
+                        WHERE r.points > 0
+                        ORDER BY r.points DESC NULLS LAST
                         LIMIT @limit";
                         break;
                     case 2: query = @"
                         SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
                         FROM (
-	                        SELECT idPlayer, idTeam, idStage, SUM(points) AS points
+	                        SELECT idPlayer, idTeam, idStage, SUM(gamesplayed) AS gamesplayed, SUM(points) AS points
 	                        FROM playerDayResults 
-	                        WHERE idTournament = @idTournament AND points > 0
+	                        WHERE idTournament = @idTournament
 	                        GROUP BY idPlayer, idTeam, idStage
                         ) AS r 
                         JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
                         JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament                        
                         JOIN players p ON r.idPlayer = p.id
-                        ORDER BY idStage, points DESC
+                        WHERE r.points > 0
+                        ORDER BY idStage, points DESC NULLS LAST
                         LIMIT @limit";
                         break;
                     case 3:
                         query = @"
                         SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
                         FROM (
-	                        SELECT idPlayer, idTeam, idGroup, SUM(points) AS points
+	                        SELECT idPlayer, idTeam, idGroup, SUM(gamesplayed) AS gamesplayed, SUM(points) AS points
 	                        FROM playerDayResults 
-	                        WHERE idTournament = @idTournament AND points > 0
+	                        WHERE idTournament = @idTournament
 	                        GROUP BY idPlayer, idTeam, idGroup
                         ) AS r 
                         JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
                         JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
                         JOIN players p ON r.idPlayer = p.id
-                        ORDER BY idGroup, points DESC
+                        WHERE r.points > 0
+                        ORDER BY idGroup, points DESC NULLS LAST
                         LIMIT @limit";
                         break;
                     default:
@@ -219,45 +222,188 @@ namespace webapi.Controllers
                         query = @"
                         SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
                         FROM (
-	                        SELECT idteam, SUM(pointsagainst) AS pointsagainst
+	                        SELECT idteam, SUM(gamesplayed) AS gamesplayed, SUM(pointsagainst) AS pointsagainst
 	                        FROM teamdayresults
-	                        WHERE idTournament = @idTournament AND pointsagainst > 0
+	                        WHERE idTournament = @idTournament
 	                        GROUP BY idTeam
                         ) t 
                         JOIN teams t2 ON t2.id = t.idteam
                         JOIN players p ON t2.idgoalkeeper = p.id
                         JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
-                        ORDER BY pointsagainst DESC
+                        WHERE t.pointsagainst > 0
+                        ORDER BY pointsagainst ASC
                         LIMIT @limit";
                         break;
                     case 2:
                         query = @"
                         SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
                         FROM (
-	                        SELECT idteam, idStage, SUM(pointsagainst) AS pointsagainst
+	                        SELECT idteam, idStage, SUM(gamesplayed) AS gamesplayed, SUM(pointsagainst) AS pointsagainst
 	                        FROM teamdayresults
-	                        WHERE idTournament = @idTournament AND pointsagainst > 0
+	                        WHERE idTournament = @idTournament
 	                        GROUP BY idTeam, idStage
                         ) t 
                         JOIN teams t2 ON t2.id = t.idteam
                         JOIN players p ON t2.idgoalkeeper = p.id
                         JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
-                        ORDER BY pointsagainst DESC
+                        WHERE t.pointsagainst > 0
+                        ORDER BY pointsagainst ASC
                         LIMIT @limit";
                         break;
                     case 3:
                         query = @"
                         SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
                         FROM (
-	                        SELECT idteam, idStage, idGroup, SUM(pointsagainst) AS pointsagainst
+	                        SELECT idteam, idStage, idGroup, SUM(gamesplayed) AS gamesplayed, SUM(pointsagainst) AS pointsagainst
 	                        FROM teamdayresults
-	                        WHERE idTournament = @idTournament AND pointsagainst > 0
+	                        WHERE idTournament = @idTournament
 	                        GROUP BY idTeam, idStage, idGroup
                         ) t 
                         JOIN teams t2 ON t2.id = t.idteam
                         JOIN players p ON t2.idgoalkeeper = p.id
                         JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
-                        ORDER BY pointsagainst DESC
+                        WHERE t.pointsagainst > 0
+                        ORDER BY pointsagainst ASC
+                        LIMIT @limit";
+                        break;
+                    default:
+                        throw new Exception("Error.InvalidRankType");
+                }
+
+                var result = c.Query<PlayerDayResult>(query, new { idTournament = idTournament, limit = limit });
+
+                return result;
+            });
+        }
+
+        [HttpGet("{idTournament}/ranking/assistances/{type}/{limit:long?}")]
+        public IActionResult GetAssistancesRanking(long idTournament, long type, long limit = -1)
+        {
+            if (limit == -1) limit = RankingDefaultNumberOfResults;
+
+            return DbOperation(c =>
+            {
+                string query = null;
+
+                // Type is how the data is grouped: 1 tournament, 2 stages, 3 groups
+                switch (type)
+                {
+                    case 1:
+                        query = @"
+                        SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
+                        FROM (
+                            SELECT idPlayer, idTeam, SUM(gamesplayed) AS gamesplayed, SUM(assistances) AS assistances
+                            FROM playerDayResults 
+                            WHERE idTournament = @idTournament
+                            GROUP BY idPlayer, idTeam
+                        ) AS r 
+                        JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
+                        JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
+                        JOIN players p ON r.idPlayer = p.id
+                        WHERE r.assistances > 0
+                        ORDER BY assistances DESC
+                        LIMIT @limit";
+                        break;
+                    case 2:
+                        query = @"
+                        SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
+                        FROM (
+                            SELECT idPlayer, idTeam, idStage, SUM(gamesplayed) AS gamesplayed, SUM(assistances) AS assistances
+                            FROM playerDayResults 
+                            WHERE idTournament = @idTournament
+                            GROUP BY idPlayer, idTeam, idStage
+                        ) AS r 
+                        JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
+                        JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
+                        JOIN players p ON r.idPlayer = p.id
+                        WHERE r.assistances > 0
+                        ORDER BY assistances DESC
+                        LIMIT @limit";
+                        break;
+                    case 3:
+                        query = @"
+                        SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
+                        FROM (
+                            SELECT idPlayer, idTeam, idStage, idGroup, SUM(gamesplayed) AS gamesplayed, SUM(assistances) AS assistances
+                            FROM playerDayResults 
+                            WHERE idTournament = @idTournament
+                            GROUP BY idPlayer, idTeam, idStage, idGroup
+                        ) AS r 
+                        JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
+                        JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
+                        JOIN players p ON r.idPlayer = p.id
+                        WHERE r.assistances > 0
+                        ORDER BY assistances DESC
+                        LIMIT @limit";
+                        break;
+                    default:
+                        throw new Exception("Error.InvalidRankType");
+                }
+
+                var result = c.Query<PlayerDayResult>(query, new { idTournament = idTournament, limit = limit });
+
+                return result;
+            });
+        }
+
+        [HttpGet("{idTournament}/ranking/mvps/{type}/{limit:long?}")]
+        public IActionResult GetMVPsRanking(long idTournament, long type, long limit = -1)
+        {
+            if (limit == -1) limit = RankingDefaultNumberOfResults;
+
+            return DbOperation(c =>
+            {
+                string query = null;
+
+                // Type is how the data is grouped: 1 tournament, 2 stages, 3 groups
+                switch (type)
+                {
+                    case 1:
+                        query = @"
+                        SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
+                        FROM (
+                            SELECT idPlayer, idTeam, SUM(gamesplayed) AS gamesplayed, SUM(mvppoints) AS mvppoints
+                            FROM playerDayResults 
+                            WHERE idTournament = @idTournament
+                            GROUP BY idPlayer, idTeam
+                        ) AS r 
+                        JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
+                        JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
+                        JOIN players p ON r.idPlayer = p.id
+                        WHERE r.mvppoints > 0
+                        ORDER BY mvppoints DESC
+                        LIMIT @limit";
+                        break;
+                    case 2:
+                        query = @"
+                        SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
+                        FROM (
+                            SELECT idPlayer, idTeam, idStage, SUM(gamesplayed) AS gamesplayed, SUM(mvppoints) AS mvppoints
+                            FROM playerDayResults 
+                            WHERE idTournament = @idTournament
+                            GROUP BY idPlayer, idTeam, idStage
+                        ) AS r 
+                        JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
+                        JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
+                        JOIN players p ON r.idPlayer = p.id
+                        WHERE r.mvppoints > 0
+                        ORDER BY mvppoints DESC
+                        LIMIT @limit";
+                        break;
+                    case 3:
+                        query = @"
+                        SELECT p.name as playerName, p.surname as playerSurname, p.idUser, tp.idTeam as idTeam, r.*
+                        FROM (
+                            SELECT idPlayer, idTeam, idStage, idGroup, SUM(gamesplayed) AS gamesplayed, SUM(mvppoints) AS mvppoints
+                            FROM playerDayResults 
+                            WHERE idTournament = @idTournament
+                            GROUP BY idPlayer, idTeam, idStage, idGroup
+                        ) AS r 
+                        JOIN teamplayers tp ON tp.idPlayer = r.idPlayer AND tp.idteam = r.idteam
+                        JOIN tournamentTeams tt ON tp.idteam = tt.idteam AND idtournament = @idTournament
+                        JOIN players p ON r.idPlayer = p.id
+                        WHERE r.mvppoints > 0
+                        ORDER BY mvppoints DESC
                         LIMIT @limit";
                         break;
                     default:
