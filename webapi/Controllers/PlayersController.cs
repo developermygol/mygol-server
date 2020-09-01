@@ -385,6 +385,21 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPut("updateplayertacticposition")]
+        public IActionResult UpdatePlayerTacticPosition([FromBody] PlayerTacticPositionInput data)
+        {
+            if (data == null) throw new Exception();
+
+            return DbTransaction((c, t) =>
+            {
+                Audit.Information(this, "{0}: Players.UpdatedPlayerTacticPosition idPlayer: {1} idTeam: {2} idTacticPosition: {3}", GetUserId(), data.IdPlayer, data.IdTeam, data.IdTacticPosition);
+
+                var positionUpdated = c.Execute("UPDATE teamplayers SET idtacticposition = @IdTacticPosition WHERE idplayer = @idPlayer AND idteam = @idTeam ", data);
+                if (positionUpdated == 0) throw new Exception("Error.NotFound");
+
+                return true;
+            });
+        }
 
         [HttpPost("delete")]
         public IActionResult Delete([FromBody] Player player)
@@ -430,9 +445,7 @@ namespace webapi.Controllers
                 return true;
             });
         }
-
-
-
+                
         // __ TeamPlayer actions ______________________________________________
 
 
@@ -852,5 +865,12 @@ namespace webapi.Controllers
     {
         public long IdPlayer { get; set; }
         public bool Approved { get; set; }
+    }
+
+    public class PlayerTacticPositionInput
+    {
+        public long IdPlayer { get; set; }
+        public long IdTeam { get; set; }
+        public long IdTacticPosition { get; set; }
     }
 }
