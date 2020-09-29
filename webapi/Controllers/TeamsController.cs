@@ -30,6 +30,18 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPost("/api/tournaments/teamfilterbytournaments")]
+        public IActionResult GetTeamsForTournament([FromBody] FilterTeamsByTorunaments data)
+        {
+            return DbOperation(conn =>
+            {
+                CheckAuthLevel(UserLevel.All);
+
+                return conn.Query<Team>($"SELECT teams.* FROM tournamentteams JOIN teams ON idTeam = id WHERE idTournament IN({string.Join(",", data.TournamnetsIds)})");
+            });
+        }
+
+
         [HttpPost("/api/tournaments/{idTournament}/teams")]
         public IActionResult CreateTeamInTournament([FromBody] Team team, long idTournament)
         {
@@ -418,5 +430,10 @@ namespace webapi.Controllers
         public long IdTeam { get; set; }
         public long IdTournament { get; set; }
         public int Status { get; set; }
+    }
+
+    public class FilterTeamsByTorunaments
+    {
+        public int[] TournamnetsIds { get; set; }
     }
 }

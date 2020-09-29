@@ -58,6 +58,7 @@ namespace webapi.Controllers
 
             Audit.Information(this, "{0}: Players.CreatePlayer {Name} {Surname}", GetUserId(), player.Name, player.Surname);
 
+
             return DbTransaction((c, t) =>
            {
                bool isOrgAdmin = IsOrganizationAdmin();
@@ -394,6 +395,8 @@ namespace webapi.Controllers
             {
                 Audit.Information(this, "{0}: Players.UpdatedPlayerTacticPosition idPlayer: {1} idTeam: {2} idTacticPosition: {3}", GetUserId(), data.IdPlayer, data.IdTeam, data.IdTacticPosition);
 
+                // Check if player with same position exists and set it to -1 
+                var removePostion = c.Execute("UPDATE teamplayers SET idtacticposition = -1 WHERE idtacticposition = @idTacticPosition AND idteam = @idTeam ", data);
                 var positionUpdated = c.Execute("UPDATE teamplayers SET idtacticposition = @IdTacticPosition WHERE idplayer = @idPlayer AND idteam = @idTeam ", data);
                 if (positionUpdated == 0) throw new Exception("Error.NotFound");
 

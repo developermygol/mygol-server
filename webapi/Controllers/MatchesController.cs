@@ -154,6 +154,7 @@ namespace webapi.Controllers
             });
         }
 
+
         [HttpGet("forreferee")]
         public IActionResult MatchesForReferee()
         {
@@ -164,6 +165,82 @@ namespace webapi.Controllers
                 var idUser = GetUserId();
                 return GetMatchesForReferee(c, idUser);
             });
+        }
+
+        [HttpPost("dayswithmatches")]
+        public IActionResult GetDaysWithMatchesByMonth([FromBody] DayMatchesFilters data)
+        {
+            if (data == null) throw new NoDataException();
+
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.Referee);
+                
+                return GetDaysWithMatches(c, data);
+            });
+        }
+
+        [HttpPost("filtermatches")]
+        public IActionResult FilterMatches([FromBody] MatchFilters data)
+        {
+            if (data == null) throw new NoDataException();
+
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.Referee);
+                
+                var idUser = GetUserId();
+                return GetFilteredMatches(c, data);
+            });
+        }
+
+        public static object GetDaysWithMatches(IDbConnection c, DayMatchesFilters data ) 
+        {
+            var query = $"SELECT starttime FROM matches WHERE where starttime::date between '{data.Start}' and '{data.End}'";
+            return c.Query<User>(query);
+        }
+
+        public static object GetFilteredMatches(IDbConnection c, MatchFilters data)
+        {            
+            string finalQuery = @"SELECT m.*, t1.id, t1.name, t1.KeyName, t1.logoImgUrl, 
+                    t2.id, t2.name, t2.keyName, t2.logoImgUrl, t.id, t.name, p.id, p.name, p.sequenceOrder, f.id, f.name
+                    FROM matches m 	                    
+	                    LEFT JOIN teams t1 ON m.idHomeTeam = t1.id 
+	                    LEFT JOIN teams t2 ON m.idVisitorTeam = t2.id 
+	                    LEFT JOIN tournaments t ON m.idTournament = t.id
+	                    LEFT JOIN playdays p ON m.idday = p.id
+                        LEFT JOIN fields f ON f.id = m.idField 
+                        LEFT JOIN matchreferees r ON r.idmatch = m.id
+                        WHERE ( m.idHomeTeam != -1 AND m.idVisitorTeam != -1 )  ";
+            
+            if (data.IdSeason != null) finalQuery += $" AND t.idseason = {data.IdSeason} ";
+            if (data.IdTournament != null) finalQuery += $" AND t.id = {data.IdTournament} ";
+            if (data.IdTeam != null) finalQuery += $" AND ( t1.id = {data.IdTeam} OR t2.id = {data.IdTeam} ) ";
+            if (data.Status != null) finalQuery += $" AND m.status = {data.Status} ";
+            if (data.IdField != null) finalQuery += $" AND f.id = {data.IdField} ";
+            if (data.IdReferee != null) finalQuery += $" AND r.iduser = {data.IdReferee} ";
+
+            if(data.UseDates == true && data.StartDate != null)
+            {
+                if (data.EndDate == null) finalQuery += $" AND m.starttime::date = '{data.StartDate.Value.ToString("s")}' ";
+                else finalQuery += $" AND m.starttime::date  BETWEEN '{data.StartDate.Value.ToString("s")}' AND '{data.EndDate.Value.ToString("s")}' ";                
+            }
+
+            finalQuery += "ORDER BY m.starttime ASC";
+
+
+            return c.Query<Match, Team, Team, Tournament, PlayDay, Field, Match>(finalQuery,
+            (match, t1, t2, tournament, day, field) =>
+            {
+                match.HomeTeam = t1;
+                match.VisitorTeam = t2;
+                match.Tournament = tournament;
+                match.Day = day;
+                match.Field = field;
+                return match;
+            },
+            new { data.IdSeason },
+            splitOn: "id");
         }
 
         public static object GetMatchesForReferee(IDbConnection c, long idUser)
@@ -933,6 +1010,25 @@ namespace webapi.Controllers
         public string HomeTeamPin { get; set; }
         public string VisitorTeamPin { get; set; }
         public string RefereePin { get; set; }
+    }
+
+    public class MatchFilters
+    {        
+        public Nullable<long> IdSeason { get; set; }
+        public Nullable<long> IdTournament { get; set; }
+        public Nullable<long> IdTeam { get; set; }
+        public Nullable<long> Status { get; set; }
+        public Nullable<long> IdField { get; set; }
+        public Nullable<long> IdReferee { get; set; }
+        public bool UseDates { get; set; }
+        public Nullable<DateTime> StartDate { get; set; }
+        public Nullable<DateTime> EndDate { get; set; }
+    }
+
+    public class DayMatchesFilters
+    {
+        public DateTime Start { get; set; }
+        public DateTime End { get; set; }
     }
 
 }
