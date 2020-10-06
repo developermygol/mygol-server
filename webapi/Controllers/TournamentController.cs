@@ -142,6 +142,7 @@ namespace webapi.Controllers
         public IActionResult GetScorerRanking(long idTournament, long type, long limit = -1)
         {
             if (limit == -1) limit = RankingDefaultNumberOfResults;
+            if (limit == 0) limit = RankingMaxNumberOfResults;
 
             return DbOperation(c =>
             {
@@ -559,5 +560,6 @@ namespace webapi.Controllers
         }
 
         private const int RankingDefaultNumberOfResults = 15;
+        private const int RankingMaxNumberOfResults = 10000;
     }
 }
