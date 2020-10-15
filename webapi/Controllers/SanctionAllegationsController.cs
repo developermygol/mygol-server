@@ -36,7 +36,7 @@ namespace webapi.Controllers
             var isTeamAdminForSanction = IsTeamAdmin(sanction.IdTeam, c);
             var isSanctionEditable = sanction.Status == (int)SanctionStatus.AutomaticallyGenerated || sanction.Status == (int)SanctionStatus.InProgress;
 
-            // Team admin can only crete allegations if it is a sanction of his team and the sanction is still in an editable state.
+            // Team admin can only create allegations if it is a sanction of his team and the sanction is still in an editable state.
             if (reqType == RequestType.Post && isTeamAdminForSanction && isSanctionEditable) return true;
 
             // Team admin can only edit his own allegations. 

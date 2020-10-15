@@ -107,7 +107,6 @@ namespace webapi.Controllers
             });
         }
 
-
         [HttpGet("stageclassification/{idStage}")]
         public IActionResult ClassificationForStage(long idStage)
         {
@@ -136,7 +135,6 @@ namespace webapi.Controllers
                 return stage;
             });
         }
-
 
         [HttpGet("{idTournament}/ranking/scorers/{type}/{limit:long?}")]
         public IActionResult GetScorerRanking(long idTournament, long type, long limit = -1)
