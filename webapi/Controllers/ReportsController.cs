@@ -85,7 +85,7 @@ namespace webapi.Controllers
             return GetFileContentResult(csv.ToString(), "insurance.csv");
         }
 
-        private static FileContentResult GetFileContentResult(string content, string fileName)
+        public static FileContentResult GetFileContentResult(string content, string fileName)
         {
             var contentType = "text/plain";
             var bytes = Encoding.GetEncoding(1252).GetBytes(content);

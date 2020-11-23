@@ -1,12 +1,16 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using webapi.Models.Db;
 
@@ -77,7 +81,6 @@ namespace webapi.Controllers
             });
         }
 
-
         [HttpPost("/api/tournaments/{idTournament}/team/delete")]
         public IActionResult RemoveTeamFromTournament([FromBody] Team team, long idTournament)
         {
@@ -106,7 +109,6 @@ namespace webapi.Controllers
                 return true;
             });
         }
-
 
         [HttpPost("obliterate")]
         public IActionResult Obliterate([FromBody] Team value)
@@ -147,6 +149,35 @@ namespace webapi.Controllers
 
                 return true;
             });
+        }
+        
+        [HttpGet("export/{idTeam}/{idTournament}")]
+        public IActionResult TeamExport (long idTeam, long idTournament)
+        {
+            string fileContent = "";
+
+            DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                // Team data
+                var result = c.Get<Team>(idTeam);
+                if (result == null) throw new Exception("Error.NotFound");
+
+                // Tournament specific data: 
+                // - Team players
+                result.Players = GetPlayerTotals(c, idTeam, idTournament);
+
+                // Team Sponsors
+                result.Sponsors = c.Query<Sponsor>("SELECT * FROM sponsors WHERE idTeam = @id", new { id = idTeam });
+
+                fileContent = JObject.FromObject(result).ToString();
+
+                return null;
+
+            });
+
+            return CreateJSONFileContentResult(fileContent);
         }
 
         [HttpGet("{idTeam}/details/{idTournament}")]
@@ -193,6 +224,63 @@ namespace webapi.Controllers
                 CheckAuthLevel(UserLevel.OrgAdmin);
 
                 return conn.Query<Team>("SELECT teams.* FROM tournamentteams JOIN teams ON idTeam = id WHERE idTournament = @tournament AND status = 2", new { tournament = idTournament });
+            });
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> TeamUploadAsync([FromForm] TeamFile file)
+        {
+            // JSON file => string
+            var stringBuilder = new StringBuilder();
+            using (var reader = new StreamReader(file.File.OpenReadStream()))
+            {
+                while (reader.Peek() >= 0)
+                    stringBuilder.AppendLine(await reader.ReadLineAsync());
+            }
+            string JSONString = stringBuilder.ToString();
+
+            // Set file content to Team Object
+            JObject jObjectTeam = JObject.Parse(JSONString);
+            Team team = jObjectTeam.ToObject<Team>();
+            long idTournamnet = file.IdTournament;
+
+            return DbOperation(conn =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+                if (team == null) throw new NoDataException();
+                long idTeam = team.Id;
+
+                var existTeamQuery = conn.Query($"SELECT * FROM teams WHERE id = {team.Id} OR name = '{team.Name}' OR keyname = '{team.KeyName}';");
+                bool teamExitst = existTeamQuery.Count() > 0;
+                                
+                if (!teamExitst)
+                {
+                    // Add team and add Team to Tournament
+                    Audit.Information(this, "{0}: Teams.CreateInTournament {idTournament} -> {Name}", GetUserId(), team.Name, idTournamnet);
+                    var teamId = conn.Insert(team);
+                    conn.Insert(new TournamentTeam { IdTournament = idTournamnet, IdTeam = teamId });
+                    return true;
+
+                } 
+                var existsTeamInTournamentQuery = conn.Query($"SELECT * FROM tournamentteams WHERE idtournament = {idTournamnet} AND idteam = '{idTeam}';");
+                bool existsTeamInTournament = existsTeamInTournamentQuery.Count() > 0;
+
+                
+
+                if (!existsTeamInTournament)
+                {
+                    // Add team just into tournamnet
+                    Audit.Information(this, "{0}: Teams.AddToTournament {idTournament} -> {idTeam}", GetUserId(), idTournamnet, idTeam);
+
+                    conn.Insert(new TournamentTeam { IdTournament = idTournamnet, IdTeam = idTeam });
+
+                    // TODO: Notify team admin (if any) her team has been added to the competition. 
+
+                    return true;
+                }
+                if (existsTeamInTournament) return new Exception("Error.Team_already_exitsts_in_tournament");
+
+                return null;
             });
         }
 
@@ -267,7 +355,22 @@ namespace webapi.Controllers
             // Here we could disallow creating teams on the default POST route (i.e. without a the join to a tournament). 
             return value.Name != null && value.Name.Length >= 1;
         }
+                
+        private static FileContentResult CreateJSONFileContentResult(string content)
+        {
+            var contentType = System.Net.Mime.MediaTypeNames.Application.Json;
+            var fileName = "team.json";
 
+            // var contentType = System.Net.Mime.MediaTypeNames.Text.Plain;            
+            // var fileName = Guid.NewGuid().ToString() + ".txt";
+            var bytes = Encoding.GetEncoding(1252).GetBytes(content);
+            var result = new FileContentResult(bytes, contentType)
+            {
+                FileDownloadName = fileName
+            };
+
+            return result;
+        }
 
         private static void FillTeamDayResults(IDbConnection c, long idTeam, long idTournament, IEnumerable<PlayDay> days)
         {
@@ -283,7 +386,6 @@ namespace webapi.Controllers
                 day.TeamDayResults.Add(tdr);
             }
         }
-
 
         private IEnumerable<PlayDay> GetDaysForTeam(IDbConnection c, long idTeam, long idTournament)
         {
@@ -423,7 +525,12 @@ namespace webapi.Controllers
         }
     }
 
-
+    public class TeamFile
+    {
+        public long IdTournament { get; set; }
+        public IFormFile File { get; set; }
+    }
+        
     public class TeamPlayerStatusInput
     {
         public long IdPlayer { get; set; }

@@ -4,12 +4,15 @@ using Ganss.XSS;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using webapi.Models.Db;
 using webapi.Models.Result;
@@ -78,6 +81,80 @@ namespace webapi.Controllers
            });
         }
 
+        [HttpPost("upload")]
+        public async Task<IActionResult> PlayerUploadAsync([FromForm] PlayerFile file)
+        {
+            // JSON file => string
+            var stringBuilder = new StringBuilder();
+            using (var reader = new StreamReader(file.File.OpenReadStream()))
+            {
+                while (reader.Peek() >= 0)
+                    stringBuilder.AppendLine(await reader.ReadLineAsync());
+            }
+            string JSONString = stringBuilder.ToString();
+
+
+            // Set file content to Player Object
+            JObject jObjectPlayer = JObject.Parse(JSONString);
+            Player player = jObjectPlayer.ToObject<Player>();
+            long idTournamnet = file.IdTournament;
+            long idTeam = file.IdTeam;
+
+            if (player == null || player.UserData == null || player.TeamData == null) throw new Exception("Malformed request");
+            Audit.Information(this, "{0}: Players.CreatePlayer {Name} {Surname}", GetUserId(), player.Name, player.Surname);
+
+            // User email should exists 
+            bool userExists = CheckUserExistsInGlobalDirectory(Request, player.UserData.Id, player.UserData.Email);
+            if (!userExists) throw new Exception($"{player.UserData.Email} does not exists in the global directory.");
+
+            var invite = new InviteInput { IdPlayer = player.Id, IdTeam = idTeam, InviteText = "Hi, we want to invite you to join our team." }; // 🚧 Lang
+
+            return DbTransaction((c, t) =>
+            {
+                Audit.Information(this, "{0}: Players.Invite1: {IdTeam} {IdPlayer}", GetUserId(), invite.IdTeam, invite.IdPlayer);
+
+                if (!IsOrganizationAdmin() && !IsTeamAdmin(invite.IdTeam, c)) throw new UnauthorizedAccessException();
+
+                // Validate player is not already on the team. 
+                var existingPlayer = c.ExecuteScalar<int>("SELECT COUNT(*) FROM teamplayers WHERE idteam = @idTeam AND idplayer = @idPlayer", invite, t);
+                if (existingPlayer > 0) throw new Exception("Error.PlayerAlreadyInTeam");
+
+                invite.InviteText = mSanitizer.Sanitize(invite.InviteText);
+
+                var notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam);
+
+                // Create the teamplayers record
+                var tp = new TeamPlayer
+                {
+                    IdPlayer = invite.IdPlayer,
+                    IdTeam = invite.IdTeam,
+                    IsTeamAdmin = false,
+                    Status = 1
+                };
+
+                c.Insert(tp, t);
+
+                // UserEvent
+
+                c.Insert(new UserEvent
+                {
+                    IdCreator = GetUserId(),
+                    IdUser = notifData.To.Id,
+                    Type = (int)UserEventType.PlayerInvitedToTeam,
+                    TimeStamp = DateTime.Now,
+                    Description = notifData.Team.Name
+                }, t);
+
+                notifData.InviteMessage = invite.InviteText;
+
+                Audit.Information(this, "{0}: Players.Invite2: {1} {2}", GetUserId(), notifData.Team.Name, notifData.To.Name);
+
+                mNotifications.NotifyEmail(Request, c, t, TemplateKeys.EmailPlayerInviteHtml, notifData);
+
+                return true;
+            });
+        }
+
         [HttpGet("forteam/{idTeam}")]
         public IActionResult PlayersForTeam(long idTeam)
         {
@@ -99,6 +176,42 @@ namespace webapi.Controllers
         public IActionResult Get(long idPlayer, long idTeam = -1, [FromQuery] long idTournament = -1)
         {
             return GetPlayerData(idPlayer, idTeam, idTournament);
+        }
+
+        [HttpGet("export/{idPlayer}/{idTeam}/{idTournament}")]
+        public IActionResult PlayerExport(long idPlayer, long idTeam, long idTournament)
+        {
+            string fileContent = "";
+
+            // var result = GetPlayerData(idPlayer, idTeam, idTournament); 🔎 Alternative
+
+            
+            DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                // Player data
+                var result = c.Get<Player>(idPlayer);
+                if (result == null) throw new Exception("Error.NotFound");
+
+                // 🔎 Sanitize sensitive and irrelevant data.
+                result.UserData = c.Get<User>(result.IdUser);
+                result.UserData.Password = null;
+                result.UserData.Salt = null;
+                result.UserData.DeviceToken = null;
+
+                result.TeamData = c.QueryFirstOrDefault<TeamPlayer>(
+                    "SELECT * FROM teamplayers WHERE idteam = @idTeam AND idplayer = @idPlayer",
+                    new { idTeam = idTeam, idPlayer = idPlayer });
+
+
+                fileContent = JObject.FromObject(result).ToString();
+                return null;
+
+                
+
+            });
+            return CreateJSONFileContentResult(fileContent);
         }
 
         private bool IsAdminOrSelf(long idUser)
@@ -616,6 +729,18 @@ namespace webapi.Controllers
             return player;
         }
 
+        private static FileContentResult CreateJSONFileContentResult(string content)
+        {
+            var contentType = System.Net.Mime.MediaTypeNames.Application.Json;
+            var fileName = "player.json";
+            var bytes = Encoding.GetEncoding(1252).GetBytes(content);
+            var result = new FileContentResult(bytes, contentType)
+            {
+                FileDownloadName = fileName
+            };
+
+            return result;
+        }
 
         public static Player InsertPlayer(IDbConnection c, IDbTransaction t, Player player, long idCreator, bool isOrgAdmin, HashedPassword password = null, UserEventType eventType = UserEventType.PlayerCreated)
         {
@@ -777,6 +902,29 @@ namespace webapi.Controllers
 
         // __ Global directory actions ________________________________________
 
+        public static bool CheckUserExistsInGlobalDirectory(HttpRequest request, long idUser, string email)
+        {
+            using (var dc = GetGlobalDirectoryConn())
+            {
+                var t = dc.BeginTransaction();
+
+                try
+                {
+                    var orgName = OrganizationManager.GetConfigForRequest(request).Name;
+
+                    var user = dc.Query<GlobalUserOrganization>("SELECT * FROM userorganization WHERE idUser = @idUser AND email = @email AND organizationName = @orgName",
+                        new { idUser = idUser, email = email, orgName = orgName }, t).FirstOrDefault();
+
+                    if (user == null) return false;
+
+                    return true;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
+        }
 
         public static void AddUserToGlobalDirectory(HttpRequest request, long idUser, string email)
         {
@@ -875,5 +1023,12 @@ namespace webapi.Controllers
         public long IdPlayer { get; set; }
         public long IdTeam { get; set; }
         public long IdTacticPosition { get; set; }
+    }
+
+    public class PlayerFile
+    {
+        public long IdTournament { get; set; }
+        public long IdTeam { get; set; }
+        public IFormFile File { get; set; }
     }
 }

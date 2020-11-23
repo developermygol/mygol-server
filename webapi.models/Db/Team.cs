@@ -28,6 +28,8 @@ namespace webapi.Models.Db
         [Write(false)] public IEnumerable<Player> Players { get; set; } // Team players in the selected tournament
         [Write(false)] public IEnumerable<PlayDay> Days { get; set; }
         [Write(false)] public Tournament Tournament { get; set; }       // Tournament data for this particular query.
+        [Write(false)] public Season Season { get; set; }       // Season data for this particular query.
+        [Write(false)] public TeamGroup TeamGroup { get; set; }       // TeamGroup data for this particular query.
         [Write(false)] public IEnumerable<Tournament> Tournaments { get; set; }  // All tournaments the team is associatiated with.
         [Write(false)] public IEnumerable<Sponsor> Sponsors { get; set; }
         

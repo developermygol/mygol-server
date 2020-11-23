@@ -422,6 +422,7 @@ namespace webapi.Models.Db
             foreach (var d in days)
             {
                 await UpdatePlayersDayStats(c, t, d.Id, idTournament);
+                await AddTopPlayDayAwards(c, t, d.Id, d.IdStage, d.IdGroup, idTournament);
             }
         }
 
@@ -565,7 +566,39 @@ namespace webapi.Models.Db
              ";
 
             await c.ExecuteAsync(sql, new { idDay = idDay, idTournament = idTournament }, t);
+
+            // Goalkeepers 🚧🚧🚧
+
         }
+
+        public static async Task AddTopPlayDayAwards(IDbConnection c, IDbTransaction t, long idDay, long idStage, long idGroup, long idTournament)
+        {
+            int maxRank = 1;
+
+            // Top Scorer
+            var playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking1 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday  WHERE p.ranking1 = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
+                  
+            if(playerAwarded != null)
+            {
+                var award = new Award
+                {
+                    IdDay = idDay,
+                    IdGroup = idGroup, 
+                    IdStage = idStage, 
+                    IdTournament = idTournament,
+
+                    IdPlayer = playerAwarded.IdPlayer,
+                    IdTeam = playerAwarded.IdTeam,
+                    Type = (int)AwardType.MaxScorer,
+                };
+
+                c.Insert(award, t);
+            }
+
+            // Top 
+
+        }
+
 
         // __ Team Day Results ________________________________________________
 

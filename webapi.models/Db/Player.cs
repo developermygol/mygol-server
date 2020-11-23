@@ -54,6 +54,9 @@ namespace webapi.Models.Db
         [Write(false)] public IEnumerable<Award> Awards { get; set; }
         [Write(false)] public string FichaPictureImgUrl { get; set; }
         [Write(false)] public IEnumerable<Sanction> Sanctions { get; set; }
+        [Write(false)] public Team Team { get; set; }       // Team data for this particular query.
+        [Write(false)] public Tournament Tournament { get; set; }       // Tournament data for this particular query.
+        [Write(false)] public Season Season { get; set; }       // Season data for this particular query.
         [Write(false)] public long? IdSanction { get; set; }
         [Write(false)] public long? IdSanctionTeam { get; set; }
 
@@ -101,4 +104,19 @@ namespace webapi.Models.Db
         Paid = 128, 
         ApprovedForPlay = 256
     }
+
+    /*
+     * FieldPosition =>
+        0: "No position", 
+        1: "Goal keeper", 
+        2: "Defender", 
+        3: "Midfielder", 
+        4: "Forward", 
+        5: "Non-playing admin", 
+        6: "Coach", 
+        7: "Physiotherapist", 
+        10: "Defender F5",
+        11: "Target F5",
+        12: "Winger F5",
+     */
 }

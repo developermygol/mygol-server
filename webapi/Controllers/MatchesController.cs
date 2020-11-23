@@ -12,6 +12,7 @@ using contracts;
 using Utils;
 using Microsoft.AspNetCore.Http;
 using Serilog;
+using System.Text;
 
 namespace webapi.Controllers
 {
@@ -90,7 +91,7 @@ namespace webapi.Controllers
                 return true;
             });
         }
-                public override IActionResult Delete([FromBody] Match value)
+        public override IActionResult Delete([FromBody] Match value)
         {
             return DbTransaction((c, t) =>
             {
@@ -154,7 +155,6 @@ namespace webapi.Controllers
             });
         }
 
-
         [HttpGet("forreferee")]
         public IActionResult MatchesForReferee()
         {
@@ -194,10 +194,69 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPost("export")]
+        public IActionResult MatchesExport([FromBody] MatchFilters data)
+        {
+            if (data == null) throw new NoDataException();
+
+            StringBuilder csv = null;
+
+            DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.Referee);
+
+                var idUser = GetUserId();
+                // var filteredMatches = GetFilteredMatches(c, data);
+
+                string finalQuery = @"SELECT m.id AS ""id"", m.startTime AS ""DateTime"", t1.name AS ""Local Team"", 
+                    m.homeScore AS ""Local Score"", m.visitorScore AS ""Visitor Score"", t2.name AS ""Visitor Team"", 
+                    t.name AS ""Competition"", m.idStage AS ""Play Day"", f.name AS ""Field"", u.name AS ""Referee""
+                    FROM matches m 	                    
+	                    LEFT JOIN teams t1 ON m.idHomeTeam = t1.id 
+	                    LEFT JOIN teams t2 ON m.idVisitorTeam = t2.id 
+	                    LEFT JOIN tournaments t ON m.idTournament = t.id
+	                    LEFT JOIN playdays p ON m.idday = p.id
+                        LEFT JOIN fields f ON f.id = m.idField 
+                        LEFT JOIN matchreferees r ON r.idmatch = m.id
+                        LEFT JOIN users u ON u.id = r.idUser
+                        WHERE ( m.idHomeTeam != -1 AND m.idVisitorTeam != -1 )  ";
+
+                if (data.IdSeason != null) finalQuery += $" AND t.idseason = {data.IdSeason} ";
+                if (data.IdTournament != null) finalQuery += $" AND t.id = {data.IdTournament} ";
+                if (data.IdTeam != null) finalQuery += $" AND ( t1.id = {data.IdTeam} OR t2.id = {data.IdTeam} ) ";
+                if (data.Status != null) finalQuery += $" AND m.status = {data.Status} ";
+                if (data.IdField != null) finalQuery += $" AND f.id = {data.IdField} ";
+                if (data.IdReferee != null) finalQuery += $" AND r.iduser = {data.IdReferee} ";
+
+                if (data.UseDates == true && data.StartDate != null)
+                {
+                    if (data.EndDate == null) finalQuery += $" AND m.starttime::date = '{data.StartDate.Value.ToString("s")}' ";
+                    else finalQuery += $" AND m.starttime::date  BETWEEN '{data.StartDate.Value.ToString("s")}' AND '{data.EndDate.Value.ToString("s")}' ";
+                }
+
+                finalQuery += "ORDER BY m.starttime ASC";
+
+                csv = ReportsController.GetCsvFromQuery(c, finalQuery,
+                (i, value) =>
+                {
+                    var r = value.ToString();
+                    // if (i == 8) return GetPositionForIndex(r);
+                    // if (i == 11) return ProcessEnrollmentData(r);
+
+                    return r;
+                });
+
+                return null;
+            });
+
+            // Convert to CSV file
+            return ReportsController.GetFileContentResult(csv.ToString(), "insurance.csv");
+        }
+
         public static object GetDaysWithMatches(IDbConnection c, DayMatchesFilters data ) 
         {
-            var query = $"SELECT starttime FROM matches WHERE where starttime::date between '{data.Start}' and '{data.End}'";
-            return c.Query<User>(query);
+            var query = $"SELECT starttime FROM matches WHERE starttime::date between '{data.Start}' and '{data.End}'";
+            return c.Query<Match>(query);
         }
 
         public static object GetFilteredMatches(IDbConnection c, MatchFilters data)
@@ -774,7 +833,7 @@ namespace webapi.Controllers
             var sql = @"
                 SELECT 
                     p.id, p.name, p.surname, p.idUser, p.birthdate, p.idPhotoImgUrl, sm.idsanction, s.idTeam AS idSanctionTeam,
-                    tp.idteam, tp.apparelnumber,
+                    tp.idteam, tp.apparelnumber, tp.fieldPosition,
                     mp.*,
                     u.id, u.avatarImgUrl,
                     pdr.* 

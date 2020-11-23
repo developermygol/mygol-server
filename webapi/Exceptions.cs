@@ -38,4 +38,20 @@ namespace webapi
 
         }
     }
+
+    public class TeamAllreadyExists : Exception
+    {
+        public TeamAllreadyExists() : base("Error.TeamAllreadyExists")
+        {
+
+        }
+    }
+
+    public class TeamAllreadyInTournamnet : Exception
+    {
+        public TeamAllreadyInTournamnet() : base("Error.TeamAllreadyInTournamnet")
+        {
+
+        }
+    }
 }

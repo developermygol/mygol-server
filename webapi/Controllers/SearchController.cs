@@ -31,25 +31,44 @@ namespace webapi.Controllers
 
                 switch (type)
                 {
-                    case "p":   // players
-                        return c.Query<Player, User, Player>(@"
-                                SELECT p.id, p.name, p.surname, u.name, u.avatarImgUrl, u.id
-                                FROM players p JOIN users u ON p.idUser = u.id
+                    case "p":   // players 
+                        return c.Query<Player, User, Team, Tournament, Season, Player>(@"
+                                SELECT p.id, p.name, p.surname, u.*, t.*, tr.*, s.*
+                                FROM players p 
+                                LEFT JOIN users u ON p.idUser = u.id
+                                LEFT JOIN teamplayers tp ON tp.idPlayer = p.id  
+                                LEFT JOIN teams t ON t.id = tp.idTeam
+                                LEFT JOIN tournamentteams tt ON tt.idTeam = t.id 
+                                LEFT JOIN tournaments tr ON tr.id = tt.idTournament 
+                                LEFT JOIN seasons s ON s.id  = tr.idSeason 
                                 WHERE u.name ilike @query",
-                            (player, user) =>
+                            (player, user, team, tournament, season) =>
                             {
                                 player.UserData = user;
+                                player.Team = team;
+                                player.Tournament = tournament;
+                                player.Season = season;
                                 return player;
                             },
-                            args, 
-                            splitOn: "name");
+                            args,
+                            splitOn: "id"); // 🚧💥🚧                         
 
                     case "t":       // Teams
-                        return c.Query<Team>(@"
-                                SELECT t.logoImgUrl, t.id, t.name, t.keyname
+                        return c.Query<Team, TournamentTeam, Tournament, Season, Team>(@"
+                                SELECT t.logoImgUrl, t.id, t.name, t.keyname, t.*, tt.*, tr.*, s.*
                                 FROM teams t
+                                LEFT JOIN tournamentteams tt on tt.idteam = t.id 
+                                LEFT JOIN tournaments tr on tr.id = tt.idtournament 
+                                LEFT JOIN seasons s on s.id  = tr.idseason 
                                 WHERE t.name ilike @query OR t.keyname ilike @query", 
-                                args);
+                                (team, torunamentTeam, tournament, season) =>
+                                {
+                                    team.Tournament = tournament;
+                                    team.Season = season;
+                                    return team;
+                                },
+                                args,
+                                splitOn: "id");
 
                     case "doc":         // Documents in the uploads area
                         break;
