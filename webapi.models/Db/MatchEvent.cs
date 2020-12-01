@@ -178,9 +178,11 @@ namespace webapi.Models.Db
 
                 case MatchEventType.RecordClosed:
                     if (insertEvent && RecordClosedExists(c, tr, ev)) throw new Exception("Error.RecordAlreadyClosed");
-                    
+
                     // Also update MVP ranking?
-                    match = ApplyStatsChange(c, tr, ev, finalCallback: UpdateTeamsMatchStats, checkTeams: false, insertEvent: insertEvent);
+
+                    //match = ApplyStatsChange(c, tr, ev, finalCallback: UpdateTeamsMatchStats, checkTeams: false, insertEvent: insertEvent);
+                    match = ApplyStatsChange(c, tr, ev, null, null, null, null, m => m.Status = (int)MatchStatus.Signed, finalCallback: UpdateTeamsMatchStats, checkTeams: false, insertEvent: insertEvent);
                     break;
                 case MatchEventType.AddToPdrData1:
                     match = ApplyStatsChange(c, tr, ev, null, p => p.Data1 += ev.IntData1, insertEvent: insertEvent);
@@ -469,7 +471,7 @@ namespace webapi.Models.Db
         private static bool RecordClosedExists(IDbConnection c, IDbTransaction t, MatchEvent ev)
         {
             var result = c.QueryFirstOrDefault<MatchEvent>("SELECT * FROM matchevents WHERE idMatch = @IdMatch AND type = @Type", new { IdMatch = ev.IdMatch, Type = (int)MatchEventType.RecordClosed } , t);
-
+            
             return (result != null);
         }
 
@@ -721,7 +723,6 @@ namespace webapi.Models.Db
 
         // __ Event stats _____________________________________________________
 
-
         private static Match ApplyStatsChange(
             IDbConnection c, IDbTransaction t, MatchEvent ev,
             Action<MatchPlayer> matchPlayerCallback = null,
@@ -735,6 +736,7 @@ namespace webapi.Models.Db
         {
             if (ev.IdMatch == 0) throw new ArgumentException("idMatch");
 
+            
 
             // Get the existing match record
             var dbMatch = c.Get<Match>(ev.IdMatch, t);
