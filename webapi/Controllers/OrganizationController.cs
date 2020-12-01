@@ -90,6 +90,18 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPut("sponsordata")]
+        public IActionResult SetSponsorData([FromBody] UpdateOrganizationSponsorDataRequest data)
+        {
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                c.Execute($"UPDATE organizations SET sponsordata = '{data.SectionsJson}' WHERE id = {data.IdOrganization};");
+                return true;
+            });
+        }
+
         private bool ValidateEdit(PublicOrganization val, IDbConnection c)
         {
             if (val.Name != null && val.Name.Length > 50) return false;
@@ -97,5 +109,11 @@ namespace webapi.Controllers
 
             return true;
         }
+    }
+
+    public class UpdateOrganizationSponsorDataRequest
+    {
+        public long IdOrganization { get; set; }
+        public string SectionsJson { get; set; }
     }
 }

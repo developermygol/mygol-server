@@ -21,6 +21,8 @@ namespace webapi.Models.Db
         public string LogoImgUrl { get; set; }
         public bool Visible { get; set; }
 
+        public string SponsorData { get; set; }
+
         [Write(false)] public IEnumerable<Team> Teams { get; set; }
         [Write(false)] public IEnumerable<PlayDay> Days { get; set; }
 

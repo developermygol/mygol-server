@@ -32,6 +32,8 @@ namespace webapi.Models.Db
 
         public string DefaultLang { get; set; }
 
+        public string SponsorData { get; set; }
+
         public string PaymentKeyPublic { get; set; }
 
         //public object FrontPageLayoutData { get; set; }

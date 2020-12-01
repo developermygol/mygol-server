@@ -107,6 +107,18 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPut("sponsordata")]
+        public IActionResult SetSponsorData([FromBody] UpdateTournamnetSponsorDataRequest data)
+        {
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                c.Execute($"UPDATE tournaments SET sponsordata = '{data.SectionsJson}' WHERE id = {data.IdTournament};");
+                return true;
+            });
+        }
+
         [HttpGet("stageclassification/{idStage}")]
         public IActionResult ClassificationForStage(long idStage)
         {
@@ -559,5 +571,11 @@ namespace webapi.Controllers
 
         private const int RankingDefaultNumberOfResults = 15;
         private const int RankingMaxNumberOfResults = 10000;
+    }
+
+    public class UpdateTournamnetSponsorDataRequest
+    {
+        public long IdTournament { get; set; }
+        public string SectionsJson { get; set; }
     }
 }

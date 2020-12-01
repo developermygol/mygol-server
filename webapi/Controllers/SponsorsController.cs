@@ -33,6 +33,7 @@ namespace webapi.Controllers
             return DbOperation(c =>
             {
                 if (idOrganization == 0) throw new Exception("Error.BadOrgId");
+
                 return c.Query<Sponsor>("SELECT * FROM sponsors WHERE idOrganization = @idOrg", new { idOrg = idOrganization });
             });
         }
@@ -47,7 +48,7 @@ namespace webapi.Controllers
             });
         }
 
-        [HttpGet("fortournament/{idteam}")]
+        [HttpGet("fortournament/{idTournament}")]
         public IActionResult GetTournamentSponsors(long idTournament)
         {
             return DbOperation(c =>
