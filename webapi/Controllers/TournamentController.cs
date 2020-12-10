@@ -119,6 +119,18 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPut("appearance")]
+        public IActionResult SetAppearanceData([FromBody] UpdateTournamnetAppearanceDataRequest data)
+        {
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                c.Execute($"UPDATE tournaments SET appearancedata = '{data.AppearanceJsonString}' WHERE id = {data.IdTournament};");
+                return true;
+            });
+        }
+
         [HttpGet("stageclassification/{idStage}")]
         public IActionResult ClassificationForStage(long idStage)
         {
@@ -577,5 +589,11 @@ namespace webapi.Controllers
     {
         public long IdTournament { get; set; }
         public string SectionsJson { get; set; }
+    }
+
+    public class UpdateTournamnetAppearanceDataRequest
+    {
+        public long IdTournament { get; set; }
+        public string AppearanceJsonString { get; set; }
     }
 }

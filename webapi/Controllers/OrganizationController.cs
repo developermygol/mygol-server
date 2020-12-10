@@ -102,6 +102,18 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPut("appearance")]
+        public IActionResult SetAppearanceData([FromBody] UpdateOrganizationAppearanceDataRequest data)
+        {
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                c.Execute($"UPDATE organizations SET appearancedata = '{data.AppearanceJsonString}' WHERE id = {data.IdOrganization};");
+                return true;
+            });
+        }
+
         private bool ValidateEdit(PublicOrganization val, IDbConnection c)
         {
             if (val.Name != null && val.Name.Length > 50) return false;
@@ -115,5 +127,11 @@ namespace webapi.Controllers
     {
         public long IdOrganization { get; set; }
         public string SectionsJson { get; set; }
+    }
+
+    public class UpdateOrganizationAppearanceDataRequest
+    {
+        public long IdOrganization { get; set; }
+        public string AppearanceJsonString { get; set; }
     }
 }

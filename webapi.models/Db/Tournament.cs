@@ -22,6 +22,7 @@ namespace webapi.Models.Db
         public bool Visible { get; set; }
 
         public string SponsorData { get; set; }
+        public string AppearanceData { get; set; }
 
         [Write(false)] public IEnumerable<Team> Teams { get; set; }
         [Write(false)] public IEnumerable<PlayDay> Days { get; set; }

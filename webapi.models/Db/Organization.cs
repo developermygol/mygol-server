@@ -33,13 +33,15 @@ namespace webapi.Models.Db
         public string DefaultLang { get; set; }
 
         public string SponsorData { get; set; }
-
+        public string AppearanceData { get; set; }
+        
         public string DpCompanyName { get; set; }
         public string DpCompanyId { get; set; }
         public string DpCompanyAddress { get; set; }
         public string DpCompanyEmail { get; set; }
         public string DpCompanyPhone { get; set; }
 
+        public int TermsVersion { get; set; }
 
         public string PaymentKeyPublic { get; set; }
 
