@@ -62,7 +62,7 @@ namespace webapi.Controllers
 
         protected bool IsOrganizationAdmin()
         {
-            return User.IsInRole("4");
+            return User.IsInRole("4") || User.IsInRole("5"); // MasterAdmin
         }
 
         protected void CheckAuthLevel(UserLevel minimumLevel)
