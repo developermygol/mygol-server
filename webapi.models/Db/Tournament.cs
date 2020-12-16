@@ -58,6 +58,7 @@ namespace webapi.Models.Db
         public int Status { get; set; }
         public int SequenceOrder { get; set; }
         public string ClassificationCriteria { get; set; }
+        public string ColorConfig { get; set; }
 
         [Write(false)] public IEnumerable<TeamDayResult> LeagueClassification { get; set; }
         [Write(false)] public IEnumerable<PlayDay> KnockoutClassification { get; set; }
