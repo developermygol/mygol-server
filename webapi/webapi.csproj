@@ -21,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="7.1.0" />
     <PackageReference Include="Handlebars.Net" Version="1.9.5" />
-    <PackageReference Include="HtmlSanitizer" Version="4.0.185" />
+    <PackageReference Include="HtmlSanitizer" Version="5.0.372" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.1.1" />
