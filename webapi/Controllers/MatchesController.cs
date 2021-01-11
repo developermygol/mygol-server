@@ -743,6 +743,9 @@ namespace webapi.Controllers
 
         protected override bool ValidateEdit(Match value, IDbConnection c, IDbTransaction t)
         {
+            // Check if field is available on that hour.
+            isFieldAvailable(c, value);
+
             // Teams cannot be changed if they have events associated
             var mr = c.QueryMultiple(@"
                 SELECT * FROM matches WHERE id = @idMatch; 
@@ -774,12 +777,34 @@ namespace webapi.Controllers
 
         protected override bool ValidateNew(Match value, IDbConnection c, IDbTransaction t)
         {
+            // Check if field is available on that hour.
+            isFieldAvailable(c, value);
+
             return true;
         }
 
 
         // __ Helpers _________________________________________________________
+        private bool isFieldAvailable(IDbConnection c, Match match)
+        {
+            long idField = match.IdField;
+            long currentMatchId = match.Id;
 
+            if (idField != 0)
+            {
+                DateTime startTime = match.StartTime;
+
+                // Ranges inside starTime hour
+                string initialDateTimeString = new DateTime(startTime.Year, startTime.Month, startTime.Day, startTime.Hour, 0, 0).ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string finalDateTimeString = new DateTime(startTime.Year, startTime.Month, startTime.Day, startTime.Hour, 59, 59).ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+                var validRangeDate = c.Query($"SELECT id FROM matches WHERE id != {currentMatchId} AND idfield = {idField} AND starttime BETWEEN '{initialDateTimeString}' AND '{finalDateTimeString}';");
+
+                if (validRangeDate.Count() > 0) throw new Exception("Error: Field is allready in use");
+            }
+
+            return true;
+        }
 
         private (Match, MatchEvent) CreateRecordClosedEvent(IDbConnection c, IDbTransaction t, long idMatch)
         {

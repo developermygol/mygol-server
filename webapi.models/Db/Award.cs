@@ -25,6 +25,11 @@ namespace webapi.Models.Db
     {
         DreamTeam = 0, 
         MVP = 1, 
-        MaxScorer = 2
+        MaxScorer = 2,
+        TopScorer = 10,
+        TopGoalKeeper = 20,
+        TopAssistances = 30,
+        TopMVP = 30,        
+        BestFairPlay = 50
     }
 }

@@ -78,7 +78,7 @@ namespace webapi.Controllers
 
         private IEnumerable<Team> GetTeams(IDbConnection c, IDbTransaction t, long[] teamIds)
         {
-            if (teamIds == null) return new Team[0];
+            if (teamIds == null || teamIds.Count() == 0) return new Team[0];
 
             var ids = Utils.GetJoined(teamIds);
             var query = $"SELECT id, name FROM teams WHERE id IN ({ids})";

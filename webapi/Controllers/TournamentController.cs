@@ -243,7 +243,7 @@ namespace webapi.Controllers
                 {
                     case 1:
                         query = @"
-                        SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
+                        SELECT p.id AS idPlayer, p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
                         FROM (
 	                        SELECT idteam, SUM(gamesplayed) AS gamesplayed, SUM(pointsagainst) AS pointsagainst
 	                        FROM teamdayresults
@@ -253,13 +253,12 @@ namespace webapi.Controllers
                         JOIN teams t2 ON t2.id = t.idteam
                         JOIN players p ON t2.idgoalkeeper = p.id
                         JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
-                        WHERE t.pointsagainst > 0
                         ORDER BY pointsagainst ASC
                         LIMIT @limit";
                         break;
                     case 2:
                         query = @"
-                        SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
+                        SELECT p.id AS idPlayer, p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
                         FROM (
 	                        SELECT idteam, idStage, SUM(gamesplayed) AS gamesplayed, SUM(pointsagainst) AS pointsagainst
 	                        FROM teamdayresults
@@ -269,13 +268,12 @@ namespace webapi.Controllers
                         JOIN teams t2 ON t2.id = t.idteam
                         JOIN players p ON t2.idgoalkeeper = p.id
                         JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
-                        WHERE t.pointsagainst > 0
                         ORDER BY pointsagainst ASC
                         LIMIT @limit";
                         break;
                     case 3:
                         query = @"
-                        SELECT p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
+                        SELECT p.id AS idPlayer, p.name AS playerName, p.surname AS playerSurname, p.idUser, t2.id AS idTeam, t.* 
                         FROM (
 	                        SELECT idteam, idStage, idGroup, SUM(gamesplayed) AS gamesplayed, SUM(pointsagainst) AS pointsagainst
 	                        FROM teamdayresults
@@ -285,7 +283,6 @@ namespace webapi.Controllers
                         JOIN teams t2 ON t2.id = t.idteam
                         JOIN players p ON t2.idgoalkeeper = p.id
                         JOIN tournamentTeams tt ON t2.id = tt.idteam AND idtournament = @idTournament
-                        WHERE t.pointsagainst > 0
                         ORDER BY pointsagainst ASC
                         LIMIT @limit";
                         break;
