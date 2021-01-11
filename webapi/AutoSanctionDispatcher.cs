@@ -31,8 +31,12 @@ namespace webapi
             var playDay = c.Get<PlayDay>(match.IdDay);
             if (playDay != null)
             {
-                var currentDayResults = GetCardsSummaryForMatchPlayers(c, t, match.Id, playDay.SequenceOrder + 1);
-                var previousDayResults = GetCardsSummaryForMatchPlayers(c, t, match.Id, playDay.SequenceOrder);
+                // 🚧🚧🚧
+                bool isAcrossStages = config.CyclesAcrossStages ? true : false;
+
+                var currentDayResults = GetCardsSummaryForMatchPlayers(c, t, match, playDay.SequenceOrder + 1, isAcrossStages);
+                var previousDayResults = GetCardsSummaryForMatchPlayers(c, t, match, playDay.SequenceOrder, isAcrossStages);
+
                 var cardCycleSanctions = GetCardCyclesSanctions(currentDayResults, previousDayResults, config.Cycles, match);
                 if (cardCycleSanctions != null) result.AddRange(cardCycleSanctions);
             }
@@ -173,17 +177,22 @@ namespace webapi
             return result;
         }
 
-        private static IDictionary<long, PlayerDayResult> GetCardsSummaryForMatchPlayers(IDbConnection c, IDbTransaction t, long idMatch, int daySequence = -1)
+        private static IDictionary<long, PlayerDayResult> GetCardsSummaryForMatchPlayers(IDbConnection c, IDbTransaction t, Match match, int daySequence = -1, bool isAcrossStages = true)
         {
+            long idMatch = match.Id;
+            long idStage = match.IdStage;
+
             // Get players with yellow cards in the match
             var playerIds = c.Query<long>("SELECT DISTINCT me.idplayer from matchplayers mp JOIN matchEvents me ON me.idMatch = mp.idMatch AND mp.idMatch = @idMatch WHERE me.type = 61 ", new { idMatch }, t);
+                                                           
             if (playerIds == null || playerIds.Count() == 0) return null;
 
-            var match = c.Get<Match>(idMatch);
+            //var match = c.Get<Match>(idMatch);
             if (match == null) throw new Exception("Error.NotFound");
 
             // Sum their data1 for this tournament into a playerDayResult object
             // if IdDay is defined, add constraint to indicate everything before the provided day (so to get the status of the previous day)
+            var acrossStagesCondition = isAcrossStages ? "" : $"AND pdr.idStage = {idStage} "; 
             var additionalCondition = daySequence > -1 ? "AND pd.sequenceOrder < @daySequence " : "";
 
             var query = $@"SELECT COALESCE(SUM(pdr.data1), 0) as data1, pdr.idPlayer, pdr.idTeam 
@@ -192,6 +201,7 @@ namespace webapi
 	                            pdr.idtournament = @IdTournament
 	                            AND (pdr.idTeam = @IdHomeTeam OR pdr.idTeam = @IdVisitorTeam)
 	                            AND pdr.idplayer IN ({Utils.GetJoined(playerIds)})
+                                {acrossStagesCondition}                                
                                 {additionalCondition}
                             GROUP BY pdr.idPlayer, pdr.idTeam";
 

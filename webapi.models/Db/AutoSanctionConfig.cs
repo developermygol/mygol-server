@@ -20,6 +20,7 @@ namespace webapi.Models.Db
     {
         public AutoSanctionCardConfig[] Cards { get; set; }
         public AutoSanctionCycleConfig[] Cycles { get; set; }
+        public bool CyclesAcrossStages { get; set; }
     }
 
 
