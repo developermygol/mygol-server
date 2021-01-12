@@ -288,7 +288,7 @@ namespace webapi.Controllers
             finalQuery += "ORDER BY m.starttime ASC";
 
 
-            return c.Query<Match, Team, Team, Tournament, PlayDay, Field, Match>(finalQuery,
+            var matches = c.Query<Match, Team, Team, Tournament, PlayDay, Field, Match>(finalQuery,
             (match, t1, t2, tournament, day, field) =>
             {
                 match.HomeTeam = t1;
@@ -298,8 +298,15 @@ namespace webapi.Controllers
                 match.Field = field;
                 return match;
             },
-            new { data.IdSeason },
+            // new { data.IdSeason },
             splitOn: "id");
+
+            foreach (var match in matches)
+            {
+                match.Referees = GetReferees(c, match.Id);
+            }
+
+            return matches;
         }
 
         public static object GetMatchesForReferee(IDbConnection c, long idUser)

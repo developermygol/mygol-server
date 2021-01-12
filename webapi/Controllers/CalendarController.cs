@@ -37,7 +37,7 @@ namespace webapi.Controllers
                         result = LeaguePlanner.Calculate(input, null, GetUserLocale(), teamIds => GetTeamPreferences(c, null, teamIds), idTeam => GetTeamName(teams, idTeam));
                         break;
                     case CalendarType.Knockout:
-                        result = KnockoutPlanner.Calculate(input, null, GetUserLocale(), teamIds => GetTeamPreferences(c, null, teamIds));
+                        result = KnockoutPlanner.Calculate(input, null, GetUserLocale(), teamIds => GetTeamPreferences(c, null, teamIds), c);
                         break;
                     default:
                         break;
@@ -238,7 +238,7 @@ namespace webapi.Controllers
 
     public class KnockoutPlanner
     {
-        public static CalendarResult Calculate(CalendarGenInput input, IList<Field> fields, string locale, TeamLocationPreferenceProviderDelegate preferenceProvider)
+        public static CalendarResult Calculate(CalendarGenInput input, IList<Field> fields, string locale, TeamLocationPreferenceProviderDelegate preferenceProvider, IDbConnection c)
         {
             Assert.IsNotNull(input);
             Assert.IsNotNull(input.TeamIds);
@@ -248,20 +248,32 @@ namespace webapi.Controllers
             var result = new CalendarResult();
 
             var teams = input.TeamIds;
-            if (!IsPowerOfTwo(teams.Length)) throw new PlannerException("Error.NotPowerOfTwo");
+            bool noTeamsDefined = teams.Length == 0;
+            int numberOfTeams = 0;
+
+            if (noTeamsDefined) // No teams defined yet.
+            {                
+                long idGroup = input.Group.IdGroup;
+                numberOfTeams = c.QueryFirst<int>($"SELECT numteams FROM stageGroups WHERE id = {idGroup};");
+            } else
+            {
+                numberOfTeams = teams.Length;
+            }
+
+            if (!IsPowerOfTwo(numberOfTeams)) throw new PlannerException("Error.NotPowerOfTwo");
             // Should also check that teams are actually valid (!= -1)
 
-            var matchRounds = CreateRounds(teams, input.Group);
+            var matchRounds = CreateRounds(teams, input.Group, numberOfTeams);
 
             string roundNameCallback(int index) => GetRoundName(index, matchRounds.Count, locale);
 
-            var numSlotsNeededPerRound = teams.Length / 2;
+            var numSlotsNeededPerRound = numberOfTeams / 2;
             //var numFields = input.FieldIds.Length;
             //var availableTimeSlots = PlannerScheduler.GetTimeSlots(input.WeekdaySlots, input.GameDuration);
             //var availableSlots = availableTimeSlots * numFields;
             //if (availableSlots < numSlotsNeededPerRound) throw new PlannerException("Error.Calendar.NotEnoughHours");
 
-            var teamPrefs = preferenceProvider?.Invoke(input.TeamIds);
+            var teamPrefs = noTeamsDefined ? null : preferenceProvider?.Invoke(input.TeamIds);
 
             PlannerScheduler.SpreadMatchesInCalendar(
                 result, 
@@ -298,9 +310,9 @@ namespace webapi.Controllers
             }
         }
 
-        public static List<List<Match>> CreateRounds(IList<long> teamIds, GroupCoords coords)
+        public static List<List<Match>> CreateRounds(IList<long> teamIds, GroupCoords coords, int numTeams)
         {
-            var num = teamIds.Count;
+            var num = teamIds.Count == 0 ? numTeams : teamIds.Count;
             var numDays = (int)Math.Log(num, 2);
             var result = new List<List<Match>>();
             var teams = teamIds;
@@ -328,12 +340,12 @@ namespace webapi.Controllers
                     IdStage = coords.IdStage,
                     IdGroup = coords.IdGroup
                 };
-
-                if (teamIds != null)
+                                
+                if (teamIds != null && teamIds.FirstOrDefault() != 0)
                 {
                     match.IdHomeTeam = teamIds[i * 2];
                     match.IdVisitorTeam = teamIds[i * 2 + 1];
-                }
+                }                
 
                 result.Add(match);
             }
@@ -394,12 +406,8 @@ namespace webapi.Controllers
             Since the game field availability is a lot of data that has to be queried to the database, it's 
             benefitial to do it on the server side. 
 
-
             Test environment for this. 
         */            
-
-        
-        
 
         /// <summary>
         /// 
