@@ -43,11 +43,20 @@ namespace webapi.Controllers
 
         protected override bool ValidateEdit(Season value, IDbConnection c, IDbTransaction t)
         {
+            var overlaps = c.Query($"SELECT id FROM seasons WHERE id != {value.Id} AND ('{value.StartDate}' BETWEEN startDate AND endDate OR '{value.EndDate}' BETWEEN startDate AND endDate);");
+
+            if (overlaps.Count() > 0) throw new Exception("Error.SeasonOverlap");
+
             return value.Name != null && value.Name.Length > 3;
         }
 
         protected override bool ValidateNew(Season value, IDbConnection c, IDbTransaction t)
         {
+            // check not overlaped dates
+            var overlaps = c.Query($"SELECT id FROM seasons WHERE '{value.StartDate}' BETWEEN startDate AND endDate OR '{value.EndDate}' BETWEEN startDate AND endDate;");
+            
+            if(overlaps.Count() > 0) throw new Exception("Error.SeasonOverlaps");
+
             return value.Name != null && value.Name.Length > 3;
         }
     }

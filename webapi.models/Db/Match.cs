@@ -53,6 +53,7 @@ namespace webapi.Models.Db
         Playing     = 3,
         Finished    = 4,
         Signed      = 5,
+        Posponed    = 6,
         Cancelled   = 8,
 
         Skip        = 10        // Descansa
