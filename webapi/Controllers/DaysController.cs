@@ -3,6 +3,8 @@ using Dapper.Contrib.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -27,6 +29,79 @@ namespace webapi.Controllers
             };
         }
 
+
+        [HttpPost("generateawards/{tournamentId:long}/{playDayId:long}")]
+        public async Task<IActionResult> GenerateDayAwards(long tournamentId, long playDayId)
+        {
+            return await DbTransactionAsync(async (c, t) =>
+            {
+                if (!IsOrganizationAdmin()) throw new UnauthorizedAccessException();
+
+                //var day = await c.QueryFirstAsync<PlayDay>("SELECT * FROM playdays WHERE id = @dayId", new { dayId = dayId }, t);
+                var day = c.Get<PlayDay>(playDayId);
+                if (day == null) throw new Exception("Error.PlayDay.NotFound");
+                                
+                // Check if has allready been generated.
+                if (day.LastUpdateTimeStamp != null && day.LastUpdateTimeStamp != default(DateTime)) throw new Exception("Error.PlayDay.AllreadySet");                
+
+                // Check has Maches ended or Recors are closed
+                var matches = c.Query<Match>("SELECT * FROM matches WHERE idday = @idDay", new { idDay = playDayId });
+
+                foreach (var match in matches)
+                {
+                    if (match.Status != (long)MatchStatus.Finished || match.Status != (long)MatchStatus.Signed) throw new Exception("Error.PlayDay.MatchesNotFinished");
+                }
+
+                // Update PlayDay => LastUpdateTimeStamp
+                day.LastUpdateTimeStamp = DateTime.UtcNow;
+                c.Update(day, t);
+
+                await MatchEvent.UpdatePlayersDayStats(c, t, playDayId, tournamentId); // Required?
+                IEnumerable<Award> topPlayDayAwards = await MatchEvent.AddTopPlayDayAwards(c, t, day.Id, day.IdStage, day.IdGroup, day.IdTournament);
+
+                var tournament = c.Get<Tournament>(tournamentId);
+
+                if (!string.IsNullOrEmpty(tournament.NotificationFlags))
+                {
+                    try
+                    {
+                        JObject notificationFlags = JsonConvert.DeserializeObject<JObject>(tournament.NotificationFlags);
+
+                        if (notificationFlags["notifyAward"] != null && (bool)notificationFlags["notifyAward"] == true)
+                        {
+                            foreach (var award in topPlayDayAwards)
+                            {
+                                string title = "¡Logro conseguido!";
+                                string message = "";
+                                switch (award.Type)
+                                {
+                                    case (int)AwardType.TopMVP:
+                                        message = "¡Eres el jugador con más MVPs!";
+                                        break;
+                                    case (int)AwardType.TopScorer:
+                                        message = "¡Eres el máximo goleador!";
+                                        break;
+                                    case (int)AwardType.TopGoalKeeper:
+                                        message = "¡Eres el mejor portero!";
+                                        break;
+                                    case (int)AwardType.TopAssistances:
+                                        message = "¡Eres el mejor asistente!";
+                                        break;
+                                }
+
+                                NotifyPlayer(c, t, award.IdPlayer, title, message);
+                            }
+                        }
+
+                    }
+                    catch { }
+                }
+
+                return true;
+            });
+        }
+
+
         protected override bool IsAuthorized(RequestType reqType, PlayDay target, IDbConnection c)
         {
             return AuthByRequestType(list: UserLevel.All, add: UserLevel.OrgAdmin, edit: UserLevel.OrgAdmin, delete: UserLevel.OrgAdmin);
@@ -49,6 +124,24 @@ namespace webapi.Controllers
         protected override bool ValidateNew(PlayDay value, IDbConnection c, IDbTransaction t)
         {
             return true;
+        }
+
+        private void NotifyPlayer(IDbConnection c, IDbTransaction t, long playerId, string title, string message)
+        {
+            Audit.Information(this, "{0}: Notifications.NotifyPlayer: {1} | {2}", GetUserId(), title, message);
+
+            var player = c.Get<Player>(playerId);
+
+            if (player.IdUser != 0)
+            {
+                var users = c.Query<User>("SELECT devicetoken FROM users u JOIN userdevices ud ON ud.idUser = u.id WHERE u.id = @id", new { id = player.IdUser });
+                if (users.Count() > 0)
+                {
+                    int usersNotified = NotificationsController.NotifyUsers(users, title, message);
+                }
+            }
+
+            c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = message, Text2 = title, TimeStamp = DateTime.Now });
         }
     }
 }

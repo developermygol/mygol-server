@@ -49,7 +49,9 @@ namespace webapi.Controllers
                 var role = GetUserRole();
                 switch (role)
                 {
-                    case (int)UserLevel.OrgAdmin: return GetOrgAdminTournamentData(c, id);
+                    case (int)UserLevel.OrgAdmin:
+                    case (int)UserLevel.MasterAdmin:
+                        return GetOrgAdminTournamentData(c, id);
                     default: return GetPublicTournamentData(c, id);
                 }
 
@@ -69,7 +71,7 @@ namespace webapi.Controllers
             });
         }
 
-        private static async Task ResetStats(IDbConnection c, IDbTransaction t, long id)
+        public async Task ResetStats(IDbConnection c, IDbTransaction t, long id)
         {
             await MatchEvent.ResetTournamentStats(c, t, id);
             await MatchEvent.ApplyTournamentStats(c, t, id);
@@ -128,6 +130,24 @@ namespace webapi.Controllers
 
                 c.Execute($"UPDATE tournaments SET appearancedata = '{data.AppearanceJsonString}' WHERE id = {data.IdTournament};");
                 return true;
+            });
+        }
+
+        [HttpPut("saveorder")]
+        public IActionResult UpdateTournamentsSequenceOrder([FromBody] UpdateTournamentsSequenceOrder data)
+        {
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                IEnumerable<TournamentSequence> sequences = data.TournamentsSequence;
+
+                foreach (var sequence in sequences)
+                {
+                    c.Execute($"UPDATE tournaments SET sequenceorder = '{sequence.SequenceOrder}' WHERE id = {sequence.Id};");
+                }
+
+                return c.Query<Tournament>("SELECT * FROM tournaments"); ;
             });
         }
 
@@ -592,5 +612,16 @@ namespace webapi.Controllers
     {
         public long IdTournament { get; set; }
         public string AppearanceJsonString { get; set; }
+    }
+
+    public class UpdateTournamentsSequenceOrder
+    {
+        public IEnumerable<TournamentSequence> TournamentsSequence { get; set; }
+    }
+
+    public class TournamentSequence
+    {
+        public long Id { get; set; }
+        public long SequenceOrder { get; set; }
     }
 }

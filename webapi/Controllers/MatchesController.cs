@@ -13,6 +13,8 @@ using Utils;
 using Microsoft.AspNetCore.Http;
 using Serilog;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace webapi.Controllers
 {
@@ -454,6 +456,50 @@ namespace webapi.Controllers
 
                 var (match, me) = MatchEvent.Create(c, t, matchEvent);
 
+                var tournament = c.Get<Tournament>(match.IdTournament);
+
+                bool isRecordClosedEvent = me.Type == (int)MatchEventType.RecordClosed;
+                bool isMVPAwardEvent = me.Type == (int)MatchEventType.MVP;
+
+                if(!string.IsNullOrEmpty(tournament.NotificationFlags))
+                {
+                    try
+                    {
+                        JObject notificationFlags = JsonConvert.DeserializeObject<JObject>(tournament.NotificationFlags);
+
+                        if (isMVPAwardEvent)
+                        {
+                            bool isNotifyAward = notificationFlags["notifyAward"] != null && (bool)notificationFlags["notifyAward"] == true;
+
+                            // 🚧💥 Template or traductions
+                            string title = "¡Logro conseguido!";
+                            string message = "¡Eres el Jugador mMás Valorado de tu equipo!";
+
+                            if (isNotifyAward) NotifyPlayer(c, t, me.IdPlayer, title, message);
+                        }
+
+                        if (isRecordClosedEvent && string.IsNullOrEmpty(tournament.NotificationFlags))
+                        {
+                            bool isNotificationMatchResult = notificationFlags["notifyMatchResult"] != null && (bool)notificationFlags["notifyMatchResult"] == true;
+                            bool isNotifyMatchResultAllInGroup = notificationFlags["notifyMatchResultAllInGroup"] != null && (bool)notificationFlags["notifyMatchResultAllInGroup"] == true;
+
+                            if (isNotificationMatchResult || isNotifyMatchResultAllInGroup)
+                            {
+                                match.HomeTeam = GetTeam(c, match.IdHomeTeam);
+                                match.VisitorTeam = GetTeam(c, match.IdVisitorTeam);
+
+                                // 🚧💥 Template or traductions
+                                string title = "Acta de partido disponible";
+                                string message = $"Ha finalizado {match.HomeTeam.Name} vs {match.VisitorTeam.Name} el dia {match.StartTime.Day} de {match.StartTime.Month} Resultado {match.HomeScore} - {match.VisitorScore}";
+
+                                if (isNotifyMatchResultAllInGroup) NotifyGroupPlayers(c, t, match, title, message);
+                                else if (isNotificationMatchResult) NotifyMatchPlayers(c, t, match, title, message);
+                            }
+                        }
+                    }
+                    catch (Exception) { }
+                }                
+
                 if (IsSanctionRelatedEvent(me))
                 {
                     var newSanctions = CreateSanctionsForAutomaticSanctionRules(c, t, match, me, GetUserId());
@@ -461,7 +507,6 @@ namespace webapi.Controllers
 
                     return new { Match = match, Event = me, newEvents, newSanctions };
                 }
-
                 return new { Match = match, Event = me };
             });
         }
@@ -528,8 +573,6 @@ namespace webapi.Controllers
                 return result;
             });
         }
-
-
 
         [HttpPost("linkplayer/{matchId}/{playerId}")]
         public IActionResult LinkPlayer(long matchId, long playerId)
@@ -1063,7 +1106,47 @@ namespace webapi.Controllers
 
 
         // ____________________________________________________________________
+        private void NotifyMatchPlayers(IDbConnection c, IDbTransaction t, Match match, string title, string message)
+        {
+            Audit.Information(this, "{0}: Notifications.NotifyMatch.RecordClosed: {1} | {2}", GetUserId(), title, message); // LOG
 
+            // 🔎 Multiple devices
+            int notificationsNumber = NotificationsController.NotifyMatch(c, null, match, title, message);
+
+            var teamPlayers = c.Query<Player>($"SELECT tp.idplayer, p.id, p.iduser FROM teamplayers tp JOIN players p ON tp.idPlayer = p.id WHERE idTeam IN({match.HomeTeam.Id}, {match.VisitorTeam.Id})");
+
+            foreach (var player in teamPlayers)
+            {
+                c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = message, Text2 = title, TimeStamp = DateTime.Now });
+            }
+        }
+
+        private void NotifyGroupPlayers(IDbConnection c, IDbTransaction t, Match match, string title, string message)
+        {
+            Audit.Information(this, "{0}: Notifications.NotifyMatch.RecordClosed: {1} | {2}", GetUserId(), title, message); // LOG
+
+            // 🔎 Multiple devices
+            int notificationsNumber = NotificationsController.NotifyTeamGroup(c, null, match.IdGroup, title, message);
+
+            var teamPlayers = c.Query<Player>($"SELECT tp.idplayer, p.id, p.iduser FROM teamplayers tp JOIN teamgroups tg ON tg.idteam = tp.idteam JOIN players p ON tp.idPlayer = p.id WHERE tg.idgroup = {match.IdGroup}");
+
+            foreach (var player in teamPlayers)
+            {
+                c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = message, Text2 = title, TimeStamp = DateTime.Now });
+            }
+        }
+
+        private void NotifyPlayer(IDbConnection c, IDbTransaction t, long playerId, string title, string message)
+        {
+            Audit.Information(this, "{0}: Notifications.NotifyPlayer: {1} | {2}", GetUserId(), title, message); // LOG
+
+            var player = c.QueryFirst<Player>($"SELECT * FROM palyers WHERE id = {playerId}");
+
+            // 🔎 Multiple devices
+            int notificationsNumber = NotificationsController.NotifyUser(c, null, player.IdUser, title, message);
+
+            c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = message, Text2 = title, TimeStamp = DateTime.Now });
+        }
 
         private void NotifyMatchPeople(HttpRequest req, IDbConnection c, IDbTransaction t, Match match, string template, BaseTemplateData data)
         {

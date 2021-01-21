@@ -29,7 +29,7 @@ namespace webapi.Models.Db
         TopScorer = 10,
         TopGoalKeeper = 20,
         TopAssistances = 30,
-        TopMVP = 30,        
+        TopMVP = 40,        
         BestFairPlay = 50
     }
 }

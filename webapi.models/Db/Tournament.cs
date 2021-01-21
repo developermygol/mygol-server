@@ -23,6 +23,8 @@ namespace webapi.Models.Db
 
         public string SponsorData { get; set; }
         public string AppearanceData { get; set; }
+        public string NotificationFlags { get; set; }
+        public long SequenceOrder { get; set; }
 
         [Write(false)] public IEnumerable<Team> Teams { get; set; }
         [Write(false)] public IEnumerable<PlayDay> Days { get; set; }

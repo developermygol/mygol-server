@@ -180,6 +180,14 @@ namespace webapi.Controllers
 
         // __ Notif API _______________________________________________________
 
+        public static int NotifyTeamGroup(IDbConnection c, IDbTransaction t, long idGroup, string title, string message)
+        {            
+            var users = c.Query<User>("SELECT p.surname as name, devicetoken FROM teamplayers tp JOIN players p ON tp.idPlayer = p.id JOIN teamgroups tg ON tg.idTeam = tp.idTeam JOIN userdevices ud ON ud.idUser = p.idUser WHERE tg.idgroup = @idGroup", new { idGroup = idGroup });
+            if (users.Count() == 0) return 0;
+
+            return NotifyUsers(users, title, message);
+        }
+
         public static int NotifyMatch(IDbConnection c, IDbTransaction t, Match m, string title, string message)
         {
             if (m == null) throw new Exception("Error.InvalidMatch");
@@ -262,5 +270,11 @@ namespace webapi.Controllers
         public long Id { get; set; }
         public string Title { get; set; }
         public string Message { get; set; }
+    }
+
+    public class NotificationFlag
+    {
+        public string name { get; set; }
+
     }
 }

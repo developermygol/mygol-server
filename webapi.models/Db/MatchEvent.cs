@@ -182,7 +182,7 @@ namespace webapi.Models.Db
                     // Also update MVP ranking?
 
                     //match = ApplyStatsChange(c, tr, ev, finalCallback: UpdateTeamsMatchStats, checkTeams: false, insertEvent: insertEvent);
-                    match = ApplyStatsChange(c, tr, ev, null, null, null, null, m => m.Status = (int)MatchStatus.Signed, finalCallback: UpdateTeamsMatchStats, checkTeams: false, insertEvent: insertEvent);
+                    match = ApplyStatsChange(c, tr, ev, null, null, null, null, m => m.Status = (int)MatchStatus.Signed, finalCallback: UpdateTeamsMatchStats, checkTeams: false, insertEvent: insertEvent);                     
                     break;
                 case MatchEventType.AddToPdrData1:
                     match = ApplyStatsChange(c, tr, ev, null, p => p.Data1 += ev.IntData1, insertEvent: insertEvent);
@@ -367,6 +367,13 @@ namespace webapi.Models.Db
             parameters, t);
         }
 
+        /*public static async Task ApplyTournamentStats(IDbConnection c, IDbTransaction t, long idTournament)
+        {
+            await ApplyAllTournamentEvents(c, t, idTournament);
+            await RecalculateTournamentGameEnds(c, t, idTournament);
+            await RecalculateTournamentDayEnds(c, t, idTournament);
+        }*/
+
         public static async Task ApplyTournamentStats(IDbConnection c, IDbTransaction t, long idTournament)
         {
             await ApplyAllTournamentEvents(c, t, idTournament);
@@ -418,9 +425,10 @@ namespace webapi.Models.Db
 
         private static async Task RecalculateTournamentDayEnds(IDbConnection c, IDbTransaction t, long idTournament)
         {
+            List<Award> awards = new List<Award>();
             var days = await c.QueryAsync<PlayDay>("SELECT * FROM playdays WHERE idTournament = @idTournament", new { idTournament = idTournament }, t);
             if (days == null) return;
-
+            
             foreach (var d in days)
             {
                 await UpdatePlayersDayStats(c, t, d.Id, idTournament);
@@ -569,7 +577,7 @@ namespace webapi.Models.Db
 
             await c.ExecuteAsync(sql, new { idDay = idDay, idTournament = idTournament }, t);
 
-            // Goalkeepers 🚧🚧🚧
+            // Goalkeepers
             dataColumn = "tr.pointsagainst";
             targetColumn = "ranking2";
 
@@ -624,9 +632,13 @@ namespace webapi.Models.Db
             await c.ExecuteAsync(sql, new { idDay = idDay, idTournament = idTournament }, t);
         }
 
-        public static async Task AddTopPlayDayAwards(IDbConnection c, IDbTransaction t, long idDay, long idStage, long idGroup, long idTournament)
+        public static async Task<List<Award>> AddTopPlayDayAwards(IDbConnection c, IDbTransaction t, long idDay, long idStage, long idGroup, long idTournament)
         {
             int maxRank = 1;
+
+            List<Award> dayAwards = new List<Award>();
+
+            // 🚧 Send Notifications 🔎 Check if already exists(status?).
 
             // Top Scorer
             var playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking1 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday  WHERE p.ranking1 = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
@@ -646,6 +658,8 @@ namespace webapi.Models.Db
                 };
 
                 c.Insert(award, t);
+
+                dayAwards.Add(award);
             }
 
             // Top Assitances
@@ -667,10 +681,11 @@ namespace webapi.Models.Db
                 };
 
                 c.Insert(award, t);
+
+                dayAwards.Add(award);
             }
 
-            // Top MVP
-            // 💥🔎🚧 Check non MVP playday            
+            // Top MVP            
             playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking4 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday  WHERE p.ranking4 = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
 
             if (playerAwarded != null)
@@ -688,7 +703,11 @@ namespace webapi.Models.Db
                 };
 
                 c.Insert(award, t);
+
+                dayAwards.Add(award);
             }
+
+            return dayAwards;
         }
 
 

@@ -3,6 +3,7 @@ using Dapper.Contrib.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -53,6 +54,8 @@ namespace webapi.Controllers
                 return result;
             });
         }
+
+
 
         [HttpGet("all")]
         public IActionResult GetAllSanctions()
@@ -219,18 +222,32 @@ namespace webapi.Controllers
                 CreateTeamSanctionPenalty(c, t, value);
                 FillSanctionTeam(c, t, value);
             }
+            // Check Tournament Flags
             else
             {
                 // Create sanction matches for this sanction
                 CreatePlayerSanctionMatches(c, t, value);
                 FillSanctionTeamAndPlayer(c, t, value);
 
-                // Notify push to player
-                var playerIdUser = c.ExecuteScalar<long>("SELECT idUser FROM players WHERE id = @id", new { id = value.IdPlayer });
+                
+                var tournament = c.Get<Tournament>(value.IdTournament);
+                if (!string.IsNullOrEmpty(tournament.NotificationFlags))
+                {
+                    try
+                    {
+                        JObject notificationFlags = JsonConvert.DeserializeObject<JObject>(tournament.NotificationFlags);
 
-                NotificationsController.TryNotifyUser(c, t, playerIdUser, Localization.Get("Nueva sanción", null), Localization.Get("Se te ha sancionado con {0} partidos.", null, value.NumMatches));
+                        if (notificationFlags["notifySanction"] != null && (bool)notificationFlags["notifySanction"] == true)
+                        {
+                            // Notify push to player
+                            var playerIdUser = c.ExecuteScalar<long>("SELECT idUser FROM players WHERE id = @id", new { id = value.IdPlayer });
+
+                            //NotificationsController.TryNotifyUser(c, t, playerIdUser, Localization.Get("Nueva sanción", null), Localization.Get("Se te ha sancionado con {0} partidos.", null, value.NumMatches));
+                            NotificationsController.TryNotifyUser(c, t, playerIdUser, "Nueva sanción", $"Se te ha sancionado con {value.NumMatches}");
+                        }
+                    } catch { }
+                }
             }
-
 
             return value;
         }

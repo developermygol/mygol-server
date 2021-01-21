@@ -13,6 +13,8 @@ namespace webapi.Models.Db
         public long IdGroup { get; set; }       // Not used now. Playdays are associated to stages (and tournaments)
         public string Dates { get; set; }
         public int SequenceOrder { get; set; }
+        public int Status { get; set; }
+        public DateTime LastUpdateTimeStamp { get; set; }
 
 
         [Write(false)] public IList<DateTime> DatesList { get; private set; } = new List<DateTime>();
