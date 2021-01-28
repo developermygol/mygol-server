@@ -825,23 +825,24 @@ namespace webapi.Controllers
             // When match is created, make sure the stageGroup is marcked as having a calendar
             SetGroupHasCalendarFlag(c, t, value.IdGroup);
 
-            // 🚧🚧🚧 
-            /*
-            int now = (int)(DateTime.Now.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalMilliseconds;
-            int threeDaysBeforeMatch = (int)(value.StartTime.AddDays(-3) - new DateTime(1970, 1, 1)).TotalMilliseconds;
-
-            if(threeDaysBeforeMatch < now)
+            if(value.StartTime != DateTime.MinValue) // No date defined
             {
-                int timer = now - threeDaysBeforeMatch;
-                timer = 2000;
+                var timeNow = DateTime.UtcNow - new DateTime(1970, 1, 1);
+                var timeThreeDaysBeforeMatch = value.StartTime.AddDays(-3) - new DateTime(1970, 1, 1);
+                double nowTime = timeNow.TotalMilliseconds;
+                double threeDaysBeforeMatch = timeThreeDaysBeforeMatch.TotalMilliseconds;
 
-                int x = 0;
+                if(nowTime < threeDaysBeforeMatch)
+                {
+                    int timer = Convert.ToInt32(threeDaysBeforeMatch - nowTime); // miliseconds till threeDaysBeforeMatch
 
-                ApiTimer.SetTimer(timer, (object sender, System.Timers.ElapsedEventArgs e) => {
-                    NotificationsController.NotifyMatch(c, t, value, "Horario de tu partido", $"Recordatorio {value.HomeTeam.Name} vs {value.VisitorTeam.Name} empiezael  dia {value.StartTime.Day} de {value.StartTime.Month} a las {value.StartTime.Hour}:{value.StartTime.Minute} en {value.Field.Name}");
-                });
-            } 
-            */
+                    ApiTimer.SetTimer(timer, (object sender, System.Timers.ElapsedEventArgs e) => {
+                        string title = Translation.Get("Push.MatchSchedule.Player.Title");
+                        string message = Translation.Get("Push.MatchSchedule.Player.Text", Translation.MatchFormatedString(value));
+                        NotificationsController.NotifyMatch(c, t, value, title, message);
+                    });
+                }
+            }
 
             return base.AfterNew(value, c, t);
         }

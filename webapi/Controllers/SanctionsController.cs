@@ -256,7 +256,8 @@ namespace webapi.Controllers
                 IdUser = idCreator,
                 Date = DateTime.Now,
                 Status = (int)SanctionAllegationStatus.Created,
-                Title = Localization.Get("Resolución comité de competición", null),
+                //Title = Localization.Get("Resolución comité de competición", null),
+                Title = Translation.Get("FirstSanctionAllegationTitle"),
                 Visible = true
             };
 

@@ -29,13 +29,3 @@ namespace webapi
 
     }
 }
-
-
-/*
- // 🚧🚧🚧🚧 Set timer
-            System.Timers.Timer test = new System.Timers.Timer(2000);
-            test.Enabled = true;
-            test.AutoReset = false;
-            test.Elapsed += Test_Elapsed;
-            // [REMOVE] => test.Elapsed -= TimerOnElapsed;
- */
