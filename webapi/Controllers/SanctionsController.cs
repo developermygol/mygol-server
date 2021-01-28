@@ -55,7 +55,54 @@ namespace webapi.Controllers
             });
         }
 
+        public override IActionResult Post([FromBody] Sanction newValue)
+        {
+            return DbTransaction((c, t) =>
+            {
+                if (newValue == null) throw new NoDataException();
 
+                Audit.Information(this, "{0}: {1}.Create", GetUserId(), typeof(Sanction).Name);
+
+                if (!IsAuthorized(RequestType.Post, newValue, c)) throw new UnauthorizedAccessException();
+                if (!ValidateNew(newValue, c, t)) throw new Exception(ValidationError);
+
+                var r = c?.Insert(newValue);
+                if (r == null) throw new Exception(AddError);
+
+                long newId = r.Value;
+                newValue.Id = newId;
+
+                // Notify User
+                NotifyPlayer(c, t, newValue.IdPlayer, "Nueva sanción", $"Se te ha sancionado con {newValue.NumMatches} partidos"); // 🚧 Template or traduction
+
+                return AfterNew(newValue, c, t);
+            });
+        }
+
+        public override IActionResult Update([FromBody] Sanction value)
+        {
+            return DbTransaction((c, t) =>
+            {
+                if (value == null) throw new NoDataException();
+
+                Audit.Information(this, "{0}: {1}.Update: {2}", GetUserId(), typeof(Sanction).Name, value.Id);
+
+                if (!IsAuthorized(RequestType.Put, value, c)) throw new UnauthorizedAccessException();
+                if (!ValidateEdit(value, c, t)) throw new Exception(ValidationError);
+
+                var initialSanction = c.Get<Sanction>(value.Id);
+
+                var result = c.Update(value, t);
+
+                // Notify User if NumMatches has updated
+                if(initialSanction.NumMatches != value.NumMatches)
+                {
+                    NotifyPlayer(c, t, value.IdPlayer, "Sanción actualizada", $"La sanción se ha actualizado a {value.NumMatches} partidos"); // 🚧 Template or traduction
+                }
+
+                return AfterEdit(value, c, t);
+            });
+        }
 
         [HttpGet("all")]
         public IActionResult GetAllSanctions()
@@ -250,6 +297,18 @@ namespace webapi.Controllers
             }
 
             return value;
+        }
+
+        private void NotifyPlayer(IDbConnection c, IDbTransaction t, long playerId, string title, string message)
+        {
+            Audit.Information(this, "{0}: Notifications.NotifyPlayer: {1} | {2}", GetUserId(), title, message); // LOG
+
+            var player = c.QueryFirst<Player>($"SELECT * FROM players WHERE id = {playerId}");
+
+            // 🔎 Multiple devices
+            int notificationsNumber = NotificationsController.NotifyUser(c, null, player.IdUser, title, message);
+
+            c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = message, Text2 = title, TimeStamp = DateTime.Now });
         }
 
         private static void FillSanctionTeam(IDbConnection c, IDbTransaction t, Sanction value)

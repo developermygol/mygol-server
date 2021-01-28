@@ -1,0 +1,88 @@
+﻿{
+  "Push.MatchSchedule.Player.Title": "Match schedule",
+  "Push.MatchSchedule.Player.Text": "Match {0} vs {1} is on {2} at {3} {4}",
+  "AtField": "in {0}",
+
+  "Push.MatchChanged.Player.Title": "Changes in the match",
+  "Push.MatchChanged.Player.Text": "{0} vs {1} is now on {2} at {3} {4}",
+
+  "Push.MatchRecordAvailable.Title": "Match report available",
+  "Push.MatchRecordAvailable.Text": "The match has ended {0} vs {1} on {2}. Result {5} - {6} {7}",
+  "PenaltyHomeWinner": "Home team wins penalty shootout.",
+  "PenaltyVisitorWinner": "The visiting team wins penalty shootout.",
+
+  "Push.RefereeAsignedToMatch.Title": "Match assigned",
+  "Push.RefereeAsignedToMatch.Text": "You have been assigned to the match {0} vs {1} on {2} at {3} {4}",
+
+  "Push.Award.Title": "Award achieved!",
+
+  "Push.Award.Type0.Text": "You are in the dream team!",
+  "Push.Award.Type1.Text": "You are the Top Rated Player of your team!",
+  "Push.Award.Type10.Text": "You are the top scorer!",
+  "Push.Award.Type20.Text": "You are the least scored goalkeeper!",
+  "Push.Award.Type30.Text": "You are the player with most assists!",
+  "Push.Award.Type40.Text": "You are the player with most MVPs!",
+
+  "Push.Sanction.Title": "New sanction",
+  "Push.Sanction.Text": "You have been penalized with {0} matches.",
+  "Push.Sanction.Updated.Title": "Sanction updated",
+  "Push.Sanction.Updated.Text": "The sanction penalty has been updated to {0} matches.",
+
+  "StartTime": "Date and time",
+  "HomeTeamName": "Local team",
+  "VisitorTeamName": "Visitor team",
+  "HomeScore": "Local Goals",
+  "VisitorScore": "Away Goals",
+  "TournamentName": "Competition",
+  "PlayDayName": "Day",
+  "FieldName": "Field",
+  "Referees": "Referees",
+
+  "MvpAward.MatchDetails": "{0} vs {1}",
+
+  "FirstSanctionAllegationTitle": "Competition committee resolution",
+
+  "ContactForm": "Contact form",
+  "Name": "Name",
+  "Email": "Email",
+  "Subject": "Subject",
+  "MsgBody": "Message text",
+
+  "EnrollmentPayment": "Registration payment",
+  "Email.NewPlayerPayment.Title": "New player payment",
+  "Email.NewPlayerPayment.Text": "Player '{0}' has made a registration payment of {1: 0.00} {2} for team '{3}', tournament '{4}'",
+
+  "unknown": "unknown",
+
+  "ShortDateFormat": "{1} {0}",
+  "month1": "January",
+  "month2": "February",
+  "month3": "March",
+  "month4": "April",
+  "month5": "may",
+  "month6": "June",
+  "month7": "July",
+  "month8": "August",
+  "month9": "September",
+  "month10": "October",
+  "month11": "November",
+  "month12": "December",
+
+  "RoundName": "Day {0}",
+  "TeamTimePreference": "Team {0} prefers time {1} that is not in the assigned time range. Ignoring the preference.",
+  "TeamTimeFieldPreference": "{1}: Preferred time of team {0} is not in the specified time ranges, or the preferred field is not in the selected list. Ignoring the team preference.",
+  "TeamPreferenceNotFound": "{1}: There is a preference for team {0} but it's not in the list of teams. Internal inconsistency.",
+  "64avos": "64th",
+  "32avos": "32th",
+  "16th": "16th",
+  "8th": "Eighth of final",
+  "4avos": "Quarterfinals",
+  "Semifinals": "Semifinals",
+  "Final": "Final", 
+
+  "Error.ObsoletePaymentWorkflow.NeedsAppUpgrade": "You have to update the app to comply with the new European online card payment regulations. When you close and reopen it, it will update on its own.",
+
+  "Test1.DoNotTranslate": "Some string for testing",
+  "Test2.DoNotTranslate": "Now with arguments {0}",
+  "Test3.DoNotTranslate": "is Test3"
+}

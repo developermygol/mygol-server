@@ -364,6 +364,7 @@ namespace webapi.Controllers
         {
             // Checks if the user device is already there, if not, it is added. 
             var count = c.ExecuteScalar<int>("SELECT count(id) FROM userdevices WHERE deviceToken = @token", new { token = deviceToken }, t);
+            
             if (count == 1) return;  // Already registered. 
 
             if (count > 1) throw new Exception($"Device registered more than once ({count})");

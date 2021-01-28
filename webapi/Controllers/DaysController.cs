@@ -49,7 +49,7 @@ namespace webapi.Controllers
 
                 foreach (var match in matches)
                 {
-                    if (match.Status != (long)MatchStatus.Finished || match.Status != (long)MatchStatus.Signed) throw new Exception("Error.PlayDay.MatchesNotFinished");
+                    if (match.Status != (int)MatchStatus.Finished && match.Status != (int)MatchStatus.Signed) throw new Exception("Error.PlayDay.MatchesNotFinished");
                 }
 
                 // Update PlayDay => LastUpdateTimeStamp
@@ -71,21 +71,21 @@ namespace webapi.Controllers
                         {
                             foreach (var award in topPlayDayAwards)
                             {
-                                string title = "¡Logro conseguido!";
+                                string title = Translation.Get("Push.Award.Title");
                                 string message = "";
                                 switch (award.Type)
                                 {
                                     case (int)AwardType.TopMVP:
-                                        message = "¡Eres el jugador con más MVPs!";
+                                        message = Translation.Get($"Push.Award.Type${(int)AwardType.TopMVP}.Text");
                                         break;
                                     case (int)AwardType.TopScorer:
-                                        message = "¡Eres el máximo goleador!";
+                                        message = Translation.Get($"Push.Award.Type${(int)AwardType.TopScorer}.Text");
                                         break;
                                     case (int)AwardType.TopGoalKeeper:
-                                        message = "¡Eres el mejor portero!";
+                                        message = Translation.Get($"Push.Award.Type${(int)AwardType.TopGoalKeeper}.Text");
                                         break;
                                     case (int)AwardType.TopAssistances:
-                                        message = "¡Eres el mejor asistente!";
+                                        message = Translation.Get($"Push.Award.Type${(int)AwardType.TopAssistances}.Text");
                                         break;
                                 }
 

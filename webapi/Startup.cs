@@ -17,6 +17,8 @@ using Microsoft.Extensions.FileProviders;
 using notification.email;
 using Dapper;
 using Serilog;
+using System.Timers;
+using System.Threading;
 
 namespace webapi
 {
@@ -73,7 +75,6 @@ namespace webapi
             services.AddSingleton(typeof(IStorageProvider), new DiskStorageProvider(diskStorageConfig));
 
             services.AddSingleton(typeof(NotificationManager), new NotificationManager(appConfig));
-
 
             OrganizationManager.Initialize(OrganizationManager.LoadOrganizationsFromFile("organizations.json"));
         }

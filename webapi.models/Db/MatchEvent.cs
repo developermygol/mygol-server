@@ -199,8 +199,6 @@ namespace webapi.Models.Db
 
             }
 
-            // Notify?
-
             return (match, ev);
         }
 
@@ -344,8 +342,6 @@ namespace webapi.Models.Db
                     break;
             }
 
-            // Notify?
-
             return match;
         }
 
@@ -461,6 +457,8 @@ namespace webapi.Models.Db
             };
 
             c.Insert(award, t);
+
+            // Notify *
         }
 
         private static void RemoveMvpAward(IDbConnection c, IDbTransaction t, Match match, MatchEvent ev)

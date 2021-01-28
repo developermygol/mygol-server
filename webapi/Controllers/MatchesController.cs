@@ -55,7 +55,7 @@ namespace webapi.Controllers
                 return match;
             });
         }
-
+                
         public override IActionResult Update([FromBody] Match value)
         {
             return DbTransaction((c, t) =>
@@ -88,6 +88,11 @@ namespace webapi.Controllers
                     //var text = "El horario del partido xxx vs yyy ha cambiado a las zzzz";
                     //if (value.IdHomeTeam > 0) NotificationsController.NotifyTeam(c, t, value.IdHomeTeam, "Horario de tu partido actualizado", text);
                     //if (value.IdVisitorTeam > 0) NotificationsController.NotifyTeam(c, t, value.IdVisitorTeam, "Horario de tu partido actualizado", text);
+                } else if(value.NotifyChanges == true)
+                {
+                    string title = Translation.Get("Push.MatchChanged.Player.Title");
+                    string message = Translation.Get("Push.MatchRecordAvailable.Text", Translation.MatchFormatedString(value));
+                    NotifyMatchPlayers(c, t, value, title, message);
                 }
 
                 return true;
@@ -471,9 +476,8 @@ namespace webapi.Controllers
                         {
                             bool isNotifyAward = notificationFlags["notifyAward"] != null && (bool)notificationFlags["notifyAward"] == true;
 
-                            // 🚧💥 Template or traductions
-                            string title = "¡Logro conseguido!";
-                            string message = "¡Eres el Jugador mMás Valorado de tu equipo!";
+                            string title = Translation.Get("Push.Award.Title");
+                            string message = Translation.Get($"Push.Award.Type{(int)AwardType.MVP}.Text");
 
                             if (isNotifyAward) NotifyPlayer(c, t, me.IdPlayer, title, message);
                         }
@@ -488,9 +492,8 @@ namespace webapi.Controllers
                                 match.HomeTeam = GetTeam(c, match.IdHomeTeam);
                                 match.VisitorTeam = GetTeam(c, match.IdVisitorTeam);
 
-                                // 🚧💥 Template or traductions
-                                string title = "Acta de partido disponible";
-                                string message = $"Ha finalizado {match.HomeTeam.Name} vs {match.VisitorTeam.Name} el dia {match.StartTime.Day} de {match.StartTime.Month} Resultado {match.HomeScore} - {match.VisitorScore}";
+                                string title = Translation.Get("Push.MatchRecordAvailable.Title");
+                                string message = Translation.Get("Push.MatchRecordAvailable.Text", Translation.MatchFormatedString(match));
 
                                 if (isNotifyMatchResultAllInGroup) NotifyGroupPlayers(c, t, match, title, message);
                                 else if (isNotificationMatchResult) NotifyMatchPlayers(c, t, match, title, message);
@@ -822,6 +825,24 @@ namespace webapi.Controllers
             // When match is created, make sure the stageGroup is marcked as having a calendar
             SetGroupHasCalendarFlag(c, t, value.IdGroup);
 
+            // 🚧🚧🚧 
+            /*
+            int now = (int)(DateTime.Now.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalMilliseconds;
+            int threeDaysBeforeMatch = (int)(value.StartTime.AddDays(-3) - new DateTime(1970, 1, 1)).TotalMilliseconds;
+
+            if(threeDaysBeforeMatch < now)
+            {
+                int timer = now - threeDaysBeforeMatch;
+                timer = 2000;
+
+                int x = 0;
+
+                ApiTimer.SetTimer(timer, (object sender, System.Timers.ElapsedEventArgs e) => {
+                    NotificationsController.NotifyMatch(c, t, value, "Horario de tu partido", $"Recordatorio {value.HomeTeam.Name} vs {value.VisitorTeam.Name} empiezael  dia {value.StartTime.Day} de {value.StartTime.Month} a las {value.StartTime.Hour}:{value.StartTime.Minute} en {value.Field.Name}");
+                });
+            } 
+            */
+
             return base.AfterNew(value, c, t);
         }
 
@@ -1140,7 +1161,7 @@ namespace webapi.Controllers
         {
             Audit.Information(this, "{0}: Notifications.NotifyPlayer: {1} | {2}", GetUserId(), title, message); // LOG
 
-            var player = c.QueryFirst<Player>($"SELECT * FROM palyers WHERE id = {playerId}");
+            var player = c.QueryFirst<Player>($"SELECT * FROM players WHERE id = {playerId}");
 
             // 🔎 Multiple devices
             int notificationsNumber = NotificationsController.NotifyUser(c, null, player.IdUser, title, message);
@@ -1163,7 +1184,6 @@ namespace webapi.Controllers
 
         private readonly NotificationManager mNotifier;
     }
-
 
     public class PlayerAttendance
     {

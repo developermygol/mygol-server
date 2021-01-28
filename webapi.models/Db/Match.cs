@@ -29,6 +29,8 @@ namespace webapi.Models.Db
         public string Comments { get; set; }
         public string VideoUrl { get; set; }
 
+        [Write(false)] public bool NotifyChanges { get; set; }
+
         [Write(false)] public Team HomeTeam { get; set; }
         [Write(false)] public Team VisitorTeam { get; set; }
         [Write(false)] public Field Field { get; set; }

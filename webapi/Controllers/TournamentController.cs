@@ -57,7 +57,7 @@ namespace webapi.Controllers
 
             });
         }
-
+             
         [HttpPost("{id:long}/recalculatestats")]
         public async Task<IActionResult> RecalculateStats(long id)
         {

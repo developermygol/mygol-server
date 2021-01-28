@@ -47,6 +47,11 @@ namespace webapi.Controllers
                 result.MenuEntries = multi.Read<BasicContent>().AsList();
                 result.Sponsors = multi.Read<Sponsor>().AsList();
 
+                if(Translation.Lang == "")
+                {
+                    Translation.LoadTranslation(result.DefaultLang);
+                }                
+
                 return result;
             });
         }

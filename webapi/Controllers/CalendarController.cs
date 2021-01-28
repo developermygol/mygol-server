@@ -299,14 +299,23 @@ namespace webapi.Controllers
 
             switch (numTeams)
             {
-                case 128: return Localization.Get("64avos", locale);
+                case 128: return Translation.Get("64avos");
+                case 64: return Translation.Get("32avos");
+                case 32: return Translation.Get("16avos");
+                case 16: return Translation.Get("8th");
+                case 8: return Translation.Get("4avos");
+                case 4: return Translation.Get("Semifinals");
+                case 2: return Translation.Get("Final");
+                default: return Localization.Get("Desconocido", locale);
+
+                /*case 128: return Localization.Get("64avos", locale);
                 case 64: return Localization.Get("32avos", locale);
                 case 32: return Localization.Get("16avos", locale);
                 case 16: return Localization.Get("Octavos de final", locale);
                 case 8: return Localization.Get("Cuartos de final", locale);
                 case 4: return Localization.Get("Semifinales", locale);
                 case 2: return Localization.Get("Final", locale);
-                default: return Localization.Get("Desconocido", locale);
+                default: return Localization.Get("Desconocido", locale);*/
             }
         }
 

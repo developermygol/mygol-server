@@ -105,7 +105,7 @@ namespace webapi.Controllers
 
                 foreach (var player in organitzationPlayers)
                 {
-                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text2 = payload.Title, Text = payload.Message, TimeStamp = DateTime.Now });
                 }
 
                 return notificationsNumber;
@@ -128,7 +128,7 @@ namespace webapi.Controllers
 
                 foreach (var player in tournamentPlayers)
                 {
-                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text2 = payload.Title, Text = payload.Message, TimeStamp = DateTime.Now });
                 }
 
                 return notificationsNumber;
@@ -151,7 +151,7 @@ namespace webapi.Controllers
 
                 foreach (var player in teamPlayers)
                 {
-                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+                    c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = player.IdUser, Status = (int)NotificationStatus.Unread, Text2 = payload.Title, Text = payload.Message, TimeStamp = DateTime.Now });
                 }
 
                 return notificationsNumber;
@@ -171,7 +171,7 @@ namespace webapi.Controllers
                 
                 int notificationsNumber = NotifyUser(c, null, payload.Id, payload.Title, payload.Message);
 
-                c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = payload.Id, Status = (int)NotificationStatus.Unread, Text = payload.Title, Text2 = payload.Message, TimeStamp = DateTime.Now });
+                c.Insert(new Notification { IdCreator = GetUserId(), IdRcptUser = payload.Id, Status = (int)NotificationStatus.Unread, Text2 = payload.Title, Text = payload.Message, TimeStamp = DateTime.Now });
 
                 return notificationsNumber;
             });

@@ -41,7 +41,7 @@ namespace webapi.Controllers
                                 LEFT JOIN tournamentteams tt ON tt.idTeam = t.id 
                                 LEFT JOIN tournaments tr ON tr.id = tt.idTournament 
                                 LEFT JOIN seasons s ON s.id  = tr.idSeason 
-                                WHERE u.name ilike @query",
+                                WHERE u.name ilike @query OR u.email ilike @query OR u.mobile ilike @query",
                             (player, user, team, tournament, season) =>
                             {
                                 player.UserData = user;
