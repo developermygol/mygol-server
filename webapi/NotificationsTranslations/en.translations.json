@@ -78,11 +78,32 @@
   "8th": "Eighth of final",
   "4avos": "Quarterfinals",
   "Semifinals": "Semifinals",
-  "Final": "Final", 
+  "Final": "Final",
 
   "Error.ObsoletePaymentWorkflow.NeedsAppUpgrade": "You have to update the app to comply with the new European online card payment regulations. When you close and reopen it, it will update on its own.",
 
   "Test1.DoNotTranslate": "Some string for testing",
   "Test2.DoNotTranslate": "Now with arguments {0}",
-  "Test3.DoNotTranslate": "is Test3"
+  "Test3.DoNotTranslate": "is Test3",
+
+  "FieldPosition0": "No position",
+  "FieldPosition1": "Goal keeper",
+  "FieldPosition2": "Defender",
+  "FieldPosition3": "Midfielder",
+  "FieldPosition4": "Forward",
+  "FieldPosition5": "Non-playing admin",
+  "FieldPosition6": "Coach",
+  "FieldPosition7": "Physiotherapist",
+  "FieldPosition10": "Defender F5",
+  "FieldPosition11": "Target F5",
+  "FieldPosition12": "Winger F5",
+
+  "PlayerFiles.Label.Name": "Name",
+  "PlayerFiles.Label.IdNumber": "ID number",
+  "PlayerFiles.Label.IdCard": "ID card",
+  "PlayerFiles.Label.BirthDate": "Birth date",
+  "PlayerFiles.Label.Tournament": "Tournament",
+  "PlayerFiles.Label.Team": "Team",
+  "PlayerFiles.Label.ApparelNumber": "ApparelNumber",
+  "PlayerFiles.Label.Role": "Role",
 }

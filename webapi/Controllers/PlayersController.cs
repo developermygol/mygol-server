@@ -1,10 +1,12 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
 using Ganss.XSS;
+using HandlebarsDotNet;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using SelectPdf;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -154,6 +156,47 @@ namespace webapi.Controllers
                 return true;
             });
         }
+
+        [HttpPost("generateplayersfile")]
+        public IActionResult GeneratePlayersFile([FromBody] PlayersFilesRequest data)
+        {
+            var players = Enumerable.Empty<Player>();
+            var team = new Team();
+            var tournament = new Tournament();
+            var org = new PublicOrganization();
+
+            DbOperation(c =>
+            {
+                
+                switch (data.PlayerType)
+                {
+                    case 1: // Only players
+                        players = GetPlayers(c, "t.idTeam = @id AND t.fieldposition NOT IN(5,6,7)", new { id = data.TeamId });
+                        break;
+                    case 2: // Non-playing admin
+                        players = GetPlayers(c, "t.idTeam = @id AND t.fieldposition = 5", new { id = data.TeamId });
+                        break;
+                    case 3: // Coach
+                        players = GetPlayers(c, "t.idTeam = @id AND t.fieldposition = 6", new { id = data.TeamId });
+                        break;
+                    case 4: // Physiotherapist
+                        players = GetPlayers(c, "t.idTeam = @id AND t.fieldposition = 7", new { id = data.TeamId });
+                        break;
+                    default:
+                        players = GetPlayers(c, "t.idTeam = @id", new { id = data.TeamId });
+                        break;
+                }
+
+                team = c.Get<Team>(data.TeamId);
+                tournament = c.Get<Tournament>(data.TournamentId);
+                org = c.Get<PublicOrganization>(1); // 🚧💥
+
+                return null;
+            });
+
+            return GeneratePlayersFilePDF(data, players, team, tournament, org);
+        }
+
 
         [HttpGet("forteam/{idTeam}")]
         public IActionResult PlayersForTeam(long idTeam)
@@ -741,7 +784,7 @@ namespace webapi.Controllers
 
             return result;
         }
-
+        
         public static Player InsertPlayer(IDbConnection c, IDbTransaction t, Player player, long idCreator, bool isOrgAdmin, HashedPassword password = null, UserEventType eventType = UserEventType.PlayerCreated)
         {
             var level = (int)UserLevel.Player;
@@ -899,6 +942,120 @@ namespace webapi.Controllers
                 splitOn: "email, idteam");
         }
 
+        private FileContentResult GeneratePlayersFilePDF(PlayersFilesRequest data, IEnumerable<Player> players, Team team, Tournament tournament, PublicOrganization org)
+        {
+            HtmlToPdf converter = new HtmlToPdf();
+            converter.Options.PdfPageSize = PdfPageSize.A4;
+            converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
+
+            int sizeDivider = data.Size == 1 ? 4 : 10;
+            string templateFileName = data.Size == 1 ? "acreditation.html" : "sheet.html";
+
+            string str_directory = Environment.CurrentDirectory.ToString();
+            string path = Path.Combine(str_directory, "BadgesTemplates", templateFileName);
+
+            Handlebars.RegisterHelper("intial", (writer, context, parameters) =>
+            {
+                if (context.First == true) writer.WriteSafeString(@"<div class='Container'>");
+                // Close Container add page break and open new Container
+                if (context.Break == true) writer.WriteSafeString(@"</div><div class='page-break'></div><div class='Container'>");
+            });
+
+            Handlebars.RegisterHelper("final", (writer, context, parameters) =>
+            {
+                // Close Container
+                if (context.Last == true) writer.WriteSafeString($"</div>");
+            });
+
+            Handlebars.RegisterHelper("avatar", (writer, context, parameters) =>
+            {
+                if (context.PlayerPhoto != null) writer.WriteSafeString($"<img class='image' src='{context.PlayerPhoto}' alt='player'>");
+            });
+
+            Handlebars.RegisterHelper("fields", (writer, context, parameters, arguments) =>
+            {
+                // Print if argument given is true
+                if (parameters[(string)arguments[0]] == true) context.Template(writer, parameters);
+            });
+
+            var template = Handlebars.Compile(System.IO.File.ReadAllText(path));
+            var uploadPath = OrganizationManager.GetOrgUploadPath(Request);
+
+            JArray PlayersTemplate = new JArray();
+            int counter = 0;
+
+            foreach (var player in players)
+            {
+                JObject TemplatePlayer = new JObject();
+
+                TemplatePlayer["First"] = counter == 0;
+                TemplatePlayer["Break"] = counter % sizeDivider == 0 && counter != 0;
+                TemplatePlayer["Last"] = counter == players.Count() - 1;
+
+                TemplatePlayer["LabelName"] = Translation.Get("PlayerFiles.Label.Name");
+                TemplatePlayer["LabelIdNumber"] = Translation.Get("PlayerFiles.Label.IdNumber");
+                TemplatePlayer["LabelIdCard"] = Translation.Get("PlayerFiles.Label.IdCard");
+                TemplatePlayer["LabelBirthDate"] = Translation.Get("PlayerFiles.Label.BirthDate");
+                TemplatePlayer["LabelTournament"] = Translation.Get("PlayerFiles.Label.Tournament");
+                TemplatePlayer["LabelTeam"] = Translation.Get("PlayerFiles.Label.Team");
+                TemplatePlayer["LabelApparelNumber"] = Translation.Get("PlayerFiles.Label.ApparelNumber");
+                TemplatePlayer["LabelRole"] = Translation.Get("PlayerFiles.Label.Role");
+
+                TemplatePlayer["PFF_TournamentName"] = data.Fields.ElementAt(0).Value;
+                TemplatePlayer["PFF_PlayerId"] = data.Fields.ElementAt(1).Value;
+                TemplatePlayer["PFF_PlayerName"] = data.Fields.ElementAt(2).Value;
+                TemplatePlayer["PFF_PlayerSurname"] = data.Fields.ElementAt(3).Value;
+                TemplatePlayer["PFF_PlayerFilePicture"] = data.Fields.ElementAt(4).Value;
+                TemplatePlayer["PFF_QrCode"] = data.Fields.ElementAt(5).Value;
+                TemplatePlayer["PFF_TeamName"] = data.Fields.ElementAt(6).Value;
+                TemplatePlayer["PFF_TeamLogo"] = data.Fields.ElementAt(7).Value;
+                TemplatePlayer["PFF_TeamApparelNumber"] = data.Fields.ElementAt(8).Value;
+                TemplatePlayer["PFF_IdCardNumber"] = data.Fields.ElementAt(9).Value;
+                TemplatePlayer["PFF_BirthDate"] = data.Fields.ElementAt(10).Value;
+                TemplatePlayer["PFF_Role"] = data.Fields.ElementAt(11).Value;
+                TemplatePlayer["PFF_OrganizationLogo"] = data.Fields.ElementAt(12).Value;
+
+                TemplatePlayer["Id"] = player.Id;
+                TemplatePlayer["Name"] = player.Name;
+                TemplatePlayer["Surname"] = player.Surname;
+                TemplatePlayer["IdCardNumber"] = player.IdCardNumber;
+                TemplatePlayer["BirthDate"] = player.BirthDate.ToString("dd-MM-yyyy");
+                TemplatePlayer["ApparelNumber"] = player.TeamData.ApparelNumber;
+                TemplatePlayer["FieldPosition"] = Translation.Get("FieldPosition" + player.TeamData.FieldPosition);
+                TemplatePlayer["PlayerPhoto"] = player.IdPhotoImgUrl == null ? null : Utils.GetUploadUrl(Request, player.IdPhotoImgUrl, player.Id, "player");
+
+                TemplatePlayer["OrgLogo"] = Utils.GetUploadUrl(Request, org.LogoImgUrl, org.Id, "org");
+                TemplatePlayer["TeamName"] = team.Name;
+                TemplatePlayer["TeamLogo"] = Utils.GetUploadUrl(Request, team.LogoImgUrl, team.Id, "team");
+                TemplatePlayer["TournamentName"] = tournament.Name;
+
+                PlayersTemplate.Add(TemplatePlayer);
+                counter++;
+            }
+
+            var html = template(new
+            {
+                BgImage = data.BgImage != null ? uploadPath + "/" + data.BgImage : null,
+                BgColor = data.BgColor,
+                TextColor = data.TextColor,
+                Players = PlayersTemplate,
+            });
+
+
+            var contentType = System.Net.Mime.MediaTypeNames.Application.Pdf;
+            var fileName = "players-badge.pdf";
+
+            PdfDocument doc = converter.ConvertHtmlString(html);
+
+            byte[] Binary = doc.Save();
+
+            var result = new FileContentResult(Binary, contentType)
+            {
+                FileDownloadName = fileName
+            };
+
+            return result;
+        }
 
         // __ Global directory actions ________________________________________
 
@@ -1030,5 +1187,23 @@ namespace webapi.Controllers
         public long IdTournament { get; set; }
         public long IdTeam { get; set; }
         public IFormFile File { get; set; }
+    }    
+
+    public class PlayersFilesRequest
+    {
+        public string BgColor { get; set; }
+        public string TextColor { get; set; }
+        public string BgImage { get; set; }
+        public IEnumerable<PlayerFilesField> Fields { get; set; }
+        public int PlayerType { get; set; }
+        public int Size { get; set; }
+        public int TeamId { get; set; }
+        public int TournamentId { get; set; }
+    }
+
+    public class PlayerFilesField
+    {
+        public bool Value { get; set; }
+        public string Name { get; set; }
     }
 }

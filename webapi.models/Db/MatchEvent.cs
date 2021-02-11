@@ -74,13 +74,30 @@ namespace webapi.Models.Db
                         t => { t.Points++; UpdateDiff(t); },        // Update teamDayResults     // Resultados del equipo en la jornada
                         other => { other.PointsAgainst++; UpdateDiff(other); },           // Update the other team points against
                         m =>                    // Update match
-                        {                  
+                        {
                             if (ev.IdTeam == m.IdHomeTeam)
                                 m.HomeScore++;
                             else if (ev.IdTeam == m.IdVisitorTeam)
                                 m.VisitorScore++;
                         }, insertEvent: insertEvent);
                     break;
+                /* // 🚧 FUTURE IMPLEMNTATION
+                case MatchEventType.Penalty: // Same as Point with +1 PenaltyPoint
+
+                    match = ApplyStatsChange(c, tr, ev,
+                        null,      // Update matchPlayer   // datos del jugador en el partido (estado) 
+                        p => { p.Points++; p.PenaltyPoints++; },        // Update playerDayResults        // Resultados del jugador en la jornada
+                        t => { t.Points++; UpdateDiff(t); },        // Update teamDayResults     // Resultados del equipo en la jornada
+                        other => { other.PointsAgainst++; UpdateDiff(other); },           // Update the other team points against
+                        m =>                    // Update match
+                        {
+                            if (ev.IdTeam == m.IdHomeTeam)
+                                m.HomeScore++;
+                            else if (ev.IdTeam == m.IdVisitorTeam)
+                                m.VisitorScore++;
+                        }, insertEvent: insertEvent);
+                    break;  
+                */
 
                 case MatchEventType.PointInOwn:
                     match = ApplyStatsChange(c, tr, ev, 
@@ -133,17 +150,14 @@ namespace webapi.Models.Db
                 case MatchEventType.Fault:
                     match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
                     break;
-
                 case MatchEventType.Penalty:
-                    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyPoints++, null, null, null, insertEvent: insertEvent);
                     break;
                 case MatchEventType.PenaltyFailed:
-                    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
-                    
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyFailed++, null, null, null, insertEvent: insertEvent);
                     break;
                 case MatchEventType.PenaltyStopped:
-                    // TODO: Still no field in the table, I need to add it (not just record the matchevent)
-                    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyStopped++, null, null, null, insertEvent: insertEvent);
                     break;
 
                 case MatchEventType.Injury:
@@ -230,6 +244,21 @@ namespace webapi.Models.Db
                                 m.VisitorScore--;
                         }, insertEvent: insertEvent);
                     break;
+                /* // 🚧 FUTURE IMPLEMNTATION
+                case MatchEventType.Penalty: // Same as Point with +1 PenaltyPoint
+                    match = ApplyStatsChange(c, tr, ev,
+                        null,
+                        p => { p.Points--; p.PenaltyPoints--; },        // Update playerDayResults        // Resultados del jugador en la jornada i penaltypoints
+                        t => { t.Points--; UpdateDiff(t); },        // Update teamDayResults     // Resultados del equipo en la jornada
+                        other => { other.PointsAgainst--; UpdateDiff(other); },           // Update the other team points against
+                        m =>                    // Update match
+                        {
+                            if (ev.IdTeam == m.IdHomeTeam)
+                                m.HomeScore--;
+                            else if (ev.IdTeam == m.IdVisitorTeam)
+                                m.VisitorScore--;
+                        }, insertEvent: insertEvent);
+                    break;*/
 
                 case MatchEventType.PointInOwn:
                     match = ApplyStatsChange(c, tr, ev,
@@ -285,17 +314,15 @@ namespace webapi.Models.Db
                 //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
                 //    break;
 
-                //case MatchEventType.Penalty:
-                //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
-                //    break;
-                //case MatchEventType.PenaltyFailed:
-                //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
-
-                //    break;
-                //case MatchEventType.PenaltyStopped:
-                //    // TODO: Still no field in the table, I need to add it (not just record the matchevent)
-                //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
-                //    break;
+                case MatchEventType.Penalty:
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyPoints--, null, null, null, insertEvent: insertEvent);
+                    break;
+                case MatchEventType.PenaltyFailed:
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyFailed--, null, null, null, insertEvent: insertEvent);
+                    break;
+                case MatchEventType.PenaltyStopped:
+                    match = ApplyStatsChange(c, tr, ev, null, p =>  p.PenaltyStopped--, null, null, null, insertEvent: insertEvent);
+                    break;
 
                 //case MatchEventType.Injury:
                 //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
@@ -545,12 +572,110 @@ namespace webapi.Models.Db
             }
         }
 
+        public static int CalculatePlayerDayDreamTeamPoints(int playerPosition, PlayerDayResult playerDayResult)
+        {
+            int dreamTeamScore = 0;
+            switch(playerPosition)
+            { 
+                case 1: // Goal keeper
+                    dreamTeamScore += playerDayResult.GamesPlayed * 3;
+                    dreamTeamScore += playerDayResult.GamesWon * 10;
+                    dreamTeamScore += playerDayResult.GamesDraw * 5;
+                    dreamTeamScore += playerDayResult.GamesLost * -5;
+                    dreamTeamScore += playerDayResult.MVPPoints * 10;
+                    dreamTeamScore += playerDayResult.Assistances * 10;
+                    dreamTeamScore += playerDayResult.CardsType1 * -2; // Yellow
+                    dreamTeamScore += playerDayResult.CardsType2 * -6; // Red
+                    dreamTeamScore += playerDayResult.Points * 15;
+                    dreamTeamScore += playerDayResult.PenaltyPoints * 10;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * -3;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * 5;
+                    dreamTeamScore += playerDayResult.PointsAgainst * -2;
+                    return dreamTeamScore;
+                case 2: // Defender
+                case 10: // Defender F5
+                    dreamTeamScore += playerDayResult.GamesPlayed * 3;
+                    dreamTeamScore += playerDayResult.GamesWon * 10;
+                    dreamTeamScore += playerDayResult.GamesDraw * 5;
+                    dreamTeamScore += playerDayResult.GamesLost * -5;
+                    dreamTeamScore += playerDayResult.MVPPoints * 8;
+                    dreamTeamScore += playerDayResult.Assistances * 8;
+                    dreamTeamScore += playerDayResult.CardsType1 * -2; // Yellow
+                    dreamTeamScore += playerDayResult.CardsType2 * -6; // Red
+                    dreamTeamScore += playerDayResult.Points * 10;
+                    dreamTeamScore += playerDayResult.PenaltyPoints * 6;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * -4;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * 8;
+                    dreamTeamScore += playerDayResult.PointsAgainst * 0;
+                    return dreamTeamScore;
+                case 3: // Midfielder
+                case 12: // Winger F5
+                    dreamTeamScore += playerDayResult.GamesPlayed * 3;
+                    dreamTeamScore += playerDayResult.GamesWon * 10;
+                    dreamTeamScore += playerDayResult.GamesDraw * 5;
+                    dreamTeamScore += playerDayResult.GamesLost * -5;
+                    dreamTeamScore += playerDayResult.MVPPoints * 7;
+                    dreamTeamScore += playerDayResult.Assistances * 5;
+                    dreamTeamScore += playerDayResult.CardsType1 * -2; // Yellow
+                    dreamTeamScore += playerDayResult.CardsType2 * -6; // Red
+                    dreamTeamScore += playerDayResult.Points * 8;
+                    dreamTeamScore += playerDayResult.PenaltyPoints * 4;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * -5;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * 10;
+                    dreamTeamScore += playerDayResult.PointsAgainst * 0;
+                    return dreamTeamScore;
+                case 4: // Forward
+                case 11: // Target F5
+                    dreamTeamScore += playerDayResult.GamesPlayed * 3;
+                    dreamTeamScore += playerDayResult.GamesWon * 10;
+                    dreamTeamScore += playerDayResult.GamesDraw * 5;
+                    dreamTeamScore += playerDayResult.GamesLost * -5;
+                    dreamTeamScore += playerDayResult.MVPPoints * 6;
+                    dreamTeamScore += playerDayResult.Assistances * 5;
+                    dreamTeamScore += playerDayResult.CardsType1 * -2; // Yellow
+                    dreamTeamScore += playerDayResult.CardsType2 * -6; // Red
+                    dreamTeamScore += playerDayResult.Points * 5;
+                    dreamTeamScore += playerDayResult.PenaltyPoints * 3;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * -8;
+                    dreamTeamScore += playerDayResult.PenaltyFailed * 15;
+                    dreamTeamScore += playerDayResult.PointsAgainst * 0;
+                    return dreamTeamScore;
 
+                default: return dreamTeamScore;
+            }
+
+            /*
+             * FieldPosition =>
+                0: "No position", 
+                1: "Goal keeper", 
+                2: "Defender", 
+                3: "Midfielder", 
+                4: "Forward", 
+                5: "Non-playing admin", 
+                6: "Coach", 
+                7: "Physiotherapist", 
+                10: "Defender F5",
+                11: "Target F5",
+                12: "Winger F5",
+             */
+        }
 
         public static async Task UpdatePlayersDayStats(IDbConnection c, IDbTransaction t, long idDay, long idTournament)
         {
-            // Rankings
+            // DreamTeamPoints
+            var playerDayResults = c.Query<PlayerDayResult>($"Select * FROM playerdayresults WHERE idTournament = {idTournament} AND idDay = {idDay}");
+            foreach (var playerDayResult in playerDayResults)
+            {
+                // 💥 TeamPlayers arr NOT using idTournamnet. 🔎 This will generate duplicity with other tournaments?
+                int playerFieldPosition = c.QueryFirst<int>($"SELECT fieldPosition FROM teamplayers WHERE idTeam = {playerDayResult.IdTeam} AND idPlayer = {playerDayResult.IdPlayer}");
+                if(playerFieldPosition != 0)
+                {
+                    int dreamTeamScore = CalculatePlayerDayDreamTeamPoints(playerFieldPosition, playerDayResult);
+                    await c.ExecuteAsync($"UPDATE playerdayresults SET dreamTeamPoints = {dreamTeamScore} WHERE idTournament = {playerDayResult.IdTournament} AND idTeam = {playerDayResult.IdTeam} AND idPlayer = {playerDayResult.IdPlayer}", t);
+                }
+            }
 
+            // [RANKINGS]
             // Goleadores
             var dataColumn = "points";
             var targetColumn = "ranking1";

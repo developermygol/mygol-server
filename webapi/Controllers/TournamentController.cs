@@ -57,7 +57,7 @@ namespace webapi.Controllers
 
             });
         }
-             
+
         [HttpPost("{id:long}/recalculatestats")]
         public async Task<IActionResult> RecalculateStats(long id)
         {
@@ -129,6 +129,18 @@ namespace webapi.Controllers
                 CheckAuthLevel(UserLevel.OrgAdmin);
 
                 c.Execute($"UPDATE tournaments SET appearancedata = '{data.AppearanceJsonString}' WHERE id = {data.IdTournament};");
+                return true;
+            });
+        }
+
+        [HttpPut("dreamteam")]
+        public IActionResult SetDreamTeamData([FromBody] UpdateTournamnetDreamTeamDataRequest data)
+        {
+            return DbOperation(c =>
+            {
+                CheckAuthLevel(UserLevel.OrgAdmin);
+
+                c.Execute($"UPDATE tournaments SET dreamteam = '{data.DreamTeamJsonString}' WHERE id = {data.IdTournament};");
                 return true;
             });
         }
@@ -456,6 +468,34 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpGet("dreamteamrankings/{idTournament:long}")]
+        public IActionResult GetTorunamentDreamTeamRankings(long idTournament)
+        {
+            // 🔎 Web public use it.
+            return DbOperation(c =>
+            {                
+                var playersDaysResults = c.Query<DreamTeamRanking>(@"
+                    SELECT pdr.idPlayer, pdr.idTeam, SUM(pdr.gamesplayed) AS gamesPlayed, SUM(pdr.gameswon ) AS gamesWon, SUM(pdr.gamesdraw) AS gamesDraw, 
+	                    SUM(pdr.gameslost) AS gamesLost, SUM(pdr.points) AS points, SUM(pdr.pointsagainst) AS pointsAgainst, 
+	                    SUM(pdr.pointsinown) AS pointsInOwn, SUM(pdr.cardstype1) AS cardsType1, SUM(pdr.cardstype2) AS cardsType2, 
+	                    SUM(pdr.assistances) AS assistances, sum (pdr.mvppoints) AS mvpPoints, SUM(pdr.penaltyPoints ) AS penaltyPoints,
+	                    SUM(pdr.penaltyfailed) AS penaltyFailed, SUM(pdr.penaltystopped) AS penaltystopped, 
+	                    SUM(pdr.dreamteampoints) AS dreamteamPoints, t.fieldPosition, tm.name AS teamName, p.name, p.surname, p.idPhotoImgUrl, u.avatarImgUrl
+                    FROM playerdayresults pdr 
+                    INNER JOIN players p ON p.id = pdr.idplayer
+                    INNER JOIN users u ON u.id = p.iduser
+                    INNER JOIN teams tm ON tm.id = pdr.idteam
+                    INNER JOIN teamplayers t ON t.idteam = pdr.idteam
+                    INNER JOIN playdays pd ON pd.id = pdr.idday 
+                    WHERE pdr.idTournament = @idTournament
+                    AND pd.lastupdatetimestamp IS NOT NULL
+                    AND t.fieldposition != 0
+                    GROUP BY pdr.idplayer, pdr.idteam, t.fieldposition, tm.name, p.name, p.surname, p.idPhotoImgUrl, u.avatarImgUrl;
+                ", new { idTournament = idTournament });
+                return playersDaysResults;
+            });
+        }
+
         private Tournament GetOrgAdminTournamentData(IDbConnection c, long id)
         {
             //var result = c.Get<Tournament>(id);
@@ -598,6 +638,14 @@ namespace webapi.Controllers
             return value.Name != null && value.Name.Length > 3;
         }
 
+        protected override object AfterEdit(Tournament value, IDbConnection conn, IDbTransaction t)
+        {
+            string sql = $"UPDATE tournamentstages SET status = {value.Status} WHERE idtournament = {value.Id};";
+            conn.Execute(sql, t);
+
+            return true;
+        }
+
         private const int RankingDefaultNumberOfResults = 15;
         private const int RankingMaxNumberOfResults = 10000;
     }
@@ -614,6 +662,12 @@ namespace webapi.Controllers
         public string AppearanceJsonString { get; set; }
     }
 
+    public class UpdateTournamnetDreamTeamDataRequest
+    {
+        public long IdTournament { get; set; }
+        public string DreamTeamJsonString { get; set; }
+    }
+
     public class UpdateTournamentsSequenceOrder
     {
         public IEnumerable<TournamentSequence> TournamentsSequence { get; set; }
@@ -623,5 +677,34 @@ namespace webapi.Controllers
     {
         public long Id { get; set; }
         public long SequenceOrder { get; set; }
+    }
+        
+    public class DreamTeamRanking
+    {
+        public long IdPlayer { get; set; }
+        public long IdTeam { get; set; }
+        
+        public int GamesPlayed { get; set; }
+        public int GamesWon { get; set; }
+        public int GamesDraw { get; set; }
+        public int GamesLost { get; set; }
+        public int Points { get; set; }
+        public int PointsAgainst { get; set; }
+        public int PointsInOwn { get; set; }
+        public int CardsType1 { get; set; }
+        public int CardsType2 { get; set; }
+        public int Assistances { get; set; }
+        public int MVPPoints { get; set; }
+        public int PenaltyPoints { get; set; }
+        public int PenaltyFailed { get; set; }
+        public int Penaltystopped { get; set; }
+        public int DreamteamPoints { get; set; }    
+        
+        public int FieldPosition { get; set; }
+        public string Name { get; set; }
+        public string Surname { get; set; }
+        public string TeamName { get; set; }
+        public string IdPhotoImgUrl { get; set; }
+        public string AvatarImgUrl { get; set; }
     }
 }

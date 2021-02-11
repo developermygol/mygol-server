@@ -52,14 +52,21 @@ namespace webapi.Controllers
                     if (match.Status != (int)MatchStatus.Finished && match.Status != (int)MatchStatus.Signed) throw new Exception("Error.PlayDay.MatchesNotFinished");
                 }
 
+                // Update Torunament title
+                var tournament = c.Get<Tournament>(tournamentId);
+
+                JObject dreamTeam = JsonConvert.DeserializeObject<JObject>(tournament.DreamTeam);
+                dreamTeam["title"] = $"{tournament.Name} - {day.Name}";
+                tournament.DreamTeam = JsonConvert.SerializeObject(dreamTeam);
+
                 // Update PlayDay => LastUpdateTimeStamp
                 day.LastUpdateTimeStamp = DateTime.UtcNow;
+
                 c.Update(day, t);
+                c.Update(tournament, t);
 
-                await MatchEvent.UpdatePlayersDayStats(c, t, playDayId, tournamentId); // Required?
+                await MatchEvent.UpdatePlayersDayStats(c, t, playDayId, tournamentId); 
                 IEnumerable<Award> topPlayDayAwards = await MatchEvent.AddTopPlayDayAwards(c, t, day.Id, day.IdStage, day.IdGroup, day.IdTournament);
-
-                var tournament = c.Get<Tournament>(tournamentId);
 
                 if (!string.IsNullOrEmpty(tournament.NotificationFlags))
                 {

@@ -83,6 +83,10 @@ namespace webapi.Models.Db
         public int Data5 { get; set; }
         public int Assistances { get; set; }
         public int MVPPoints { get; set; }
+        public int PenaltyPoints { get; set; }
+        public int PenaltyFailed { get; set; }
+        public int PenaltyStopped { get; set; }
+        public int DreamTeamPoints { get; set; }
 
         [Write(false)] public string PlayerName { get; set; }
         [Write(false)] public string PlayerSurname { get; set; }
