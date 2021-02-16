@@ -98,7 +98,24 @@ namespace webapi.Models.Db
                         }, insertEvent: insertEvent);
                     break;  
                 */
+                case MatchEventType.PenaltyShootout:
+                    // 🚧💥
 
+                    match = ApplyStatsChange(c, tr, ev,
+                        null,   // Update matchPlayer   // datos del jugador en el partido (estado) 
+                        null,   // Update playerDayResults        // Resultados del jugador en la jornada
+                        t => { t.Points = t.Points + ev.IntData1; UpdateDiff(t); },    // Update teamDayResults     // Resultados del equipo en la jornada
+                        other => { other.PointsAgainst = other.PointsAgainst + ev.IntData2; UpdateDiff(other); },           // Update the other team points against
+                        m => // Update match
+                        {
+                            m.VisibleHomeScore = m.HomeScore;
+                            m.HomeScore = m.HomeScore + ev.IntData1;
+
+                            m.VisibleVisitorScore = m.VisitorScore;
+                            m.VisitorScore = m.VisitorScore + ev.IntData2;
+
+                        }, checkTeams: false, insertEvent: insertEvent);
+                    break;
                 case MatchEventType.PointInOwn:
                     match = ApplyStatsChange(c, tr, ev, 
                         null,
@@ -243,6 +260,23 @@ namespace webapi.Models.Db
                             else if (ev.IdTeam == m.IdVisitorTeam)
                                 m.VisitorScore--;
                         }, insertEvent: insertEvent);
+                    break;
+                case MatchEventType.PenaltyShootout:
+                    // 🚧💥
+                    match = ApplyStatsChange(c, tr, ev,
+                        null,   // Update matchPlayer   // datos del jugador en el partido (estado) 
+                        null,   // Update playerDayResults        // Resultados del jugador en la jornada
+                        t => { t.Points = t.Points - ev.IntData1; UpdateDiff(t); },    // Update teamDayResults     // Resultados del equipo en la jornada
+                        other => { other.PointsAgainst = other.PointsAgainst - ev.IntData2; UpdateDiff(other); },           // Update the other team points against
+                        m => // Update match
+                        {
+                            m.VisibleHomeScore = 0;
+                            m.HomeScore = m.HomeScore - ev.IntData1;
+                            // 💥 posible error with multiple penalties shootout
+                            m.VisibleVisitorScore = 0;
+                            m.VisitorScore = m.VisitorScore - ev.IntData2;
+
+                        }, checkTeams: false, insertEvent: insertEvent);
                     break;
                 /* // 🚧 FUTURE IMPLEMNTATION
                 case MatchEventType.Penalty: // Same as Point with +1 PenaltyPoint
@@ -968,7 +1002,7 @@ namespace webapi.Models.Db
         {
             if (ev.IdMatch == 0) throw new ArgumentException("idMatch");
 
-            
+            bool isPenaltyShootout = ev.IntData1 > 0 || ev.IntData2 > 0;
 
             // Get the existing match record
             var dbMatch = c.Get<Match>(ev.IdMatch, t);
@@ -978,7 +1012,7 @@ namespace webapi.Models.Db
             if (checkTeams)
             {
                 if (ev.IdTeam != dbMatch.IdHomeTeam && ev.IdTeam != dbMatch.IdVisitorTeam) throw new Exception("Error.InvalidTeam");
-            }
+            }             
 
             ev.IdDay = dbMatch.IdDay;
 
@@ -987,6 +1021,14 @@ namespace webapi.Models.Db
             {
                 ev.TimeStamp = DateTime.Now;
                 c.Insert(ev, t);
+            }
+            // 🚧
+            if (isPenaltyShootout)
+            {
+                ev.IdTeam = dbMatch.IdHomeTeam;
+                UpdateTeamDayResult(c, t, ev, teamDayCallback, dbMatch);
+                var otherTeamEv = new MatchEvent { IdDay = ev.IdDay, IdMatch = ev.IdMatch, IdTeam = GetOtherTeam(dbMatch, ev.IdTeam) };
+                UpdateTeamDayResult(c, t, otherTeamEv, otherTeamCallback, dbMatch);
             }
 
             if (ev.IdTeam > 0)
@@ -1342,7 +1384,9 @@ namespace webapi.Models.Db
         Card5                   = 65,
 
         MVP                     = 70,
-            
+
+        PenaltyShootout          = 80,
+
         RecordClosed            = 100,
 
         // Maintenance event types: for sanctions and other regularization of the player and team points

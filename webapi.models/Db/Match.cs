@@ -23,6 +23,9 @@ namespace webapi.Models.Db
         public int HomeScore { get; set; }
         public int VisitorScore { get; set; }
 
+        public int VisibleHomeScore { get; set; }
+        public int VisibleVisitorScore { get; set; }
+
         public string HomeTeamDescription { get; set; }         // To be displayed if no home team is defined
         public string VisitorTeamDescription { get; set; }      // To be displayed if no visitor team is defined
 
