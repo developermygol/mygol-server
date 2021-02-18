@@ -765,11 +765,55 @@ namespace webapi.Models.Db
 
             await c.ExecuteAsync(sql, new { idDay = idDay, idTournament = idTournament }, t);
 
-            // Assistances 🚧🚧🚧
+            // Assistances 
+            dataColumn = "assistances";
+            targetColumn = "ranking3";
 
-            // MVPs 🚧🚧🚧
+            sql = $@"
+                UPDATE playerdayresults pdr
+                SET {targetColumn} = ranked.rank 
+                FROM (
+	                SELECT 
+		                idplayer, 
+		                p.idtournament, 
+		                sum({dataColumn}) AS data, 
+		                rank() OVER (PARTITION BY p.idtournament ORDER BY COALESCE(sum({dataColumn}),0) DESC) AS rank
+	                FROM playerdayresults 
+		                JOIN playdays p ON idday = p.id
+	                WHERE sequenceorder <= (select sequenceorder from playdays where id = @idDay) 
+		                AND p.idtournament = @idTournament
+	                group by idplayer, p.idtournament
+	                order by data desc
+                ) AS ranked
+                WHERE pdr.idTournament = ranked.idtournament and pdr.idday = @idDay and pdr.idplayer = ranked.idplayer
+             ";
+
+            // MVPs 
             dataColumn = "mvppoints";
             targetColumn = "ranking4";
+
+            sql = $@"
+                UPDATE playerdayresults pdr
+                SET {targetColumn} = ranked.rank 
+                FROM (
+	                SELECT 
+		                idplayer, 
+		                p.idtournament, 
+		                sum({dataColumn}) AS data, 
+		                rank() OVER (PARTITION BY p.idtournament ORDER BY COALESCE(sum({dataColumn}),0) DESC) AS rank
+	                FROM playerdayresults 
+		                JOIN playdays p ON idday = p.id
+	                WHERE sequenceorder <= (select sequenceorder from playdays where id = @idDay) 
+		                AND p.idtournament = @idTournament
+	                group by idplayer, p.idtournament
+	                order by data desc
+                ) AS ranked
+                WHERE pdr.idTournament = ranked.idtournament and pdr.idday = @idDay and pdr.idplayer = ranked.idplayer
+             ";
+
+            // DreamTeam
+            dataColumn = "dreamteampoints";
+            targetColumn = "ranking5";
 
             sql = $@"
                 UPDATE playerdayresults pdr
@@ -823,9 +867,8 @@ namespace webapi.Models.Db
                 dayAwards.Add(award);
             }
 
-            // Top Assitances
-            // 🔎 ONLY team official goalkeeper
-            playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking2 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday JOIN teams t ON t.id = p.idteam  WHERE t.idgoalkeeper = p.idplayer  AND p.ranking2 = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
+            // Top GoalKeeper 🔎 ONLY team official goalkeeper
+            playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking2 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday JOIN teams t ON t.id = p.idteam  WHERE t.idgoalkeeper = p.idplayer  AND p.dreamteampoints = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
 
             if (playerAwarded != null)
             {
@@ -846,6 +889,28 @@ namespace webapi.Models.Db
                 dayAwards.Add(award);
             }
 
+            // Top Assitances
+            playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking3 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday  WHERE p.ranking3 = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
+
+            if (playerAwarded != null)
+            {
+                var award = new Award
+                {
+                    IdDay = idDay,
+                    IdGroup = idGroup,
+                    IdStage = idStage,
+                    IdTournament = idTournament,
+
+                    IdPlayer = playerAwarded.IdPlayer,
+                    IdTeam = playerAwarded.IdTeam,
+                    Type = (int)AwardType.TopAssistances,
+                };
+
+                c.Insert(award, t);
+
+                dayAwards.Add(award);
+            }
+                        
             // Top MVP            
             playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking4 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday  WHERE p.ranking4 = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
 
@@ -861,6 +926,28 @@ namespace webapi.Models.Db
                     IdPlayer = playerAwarded.IdPlayer,
                     IdTeam = playerAwarded.IdTeam,
                     Type = (int)AwardType.TopGoalKeeper,
+                };
+
+                c.Insert(award, t);
+
+                dayAwards.Add(award);
+            }
+
+            // Top DreamTeam
+            playerAwarded = await c.QueryFirstOrDefaultAsync<PlayerDayResult>("SELECT DISTINCT ON(pd.id) p.idplayer, p.idteam, p.ranking5 FROM playerdayresults p JOIN playdays pd on pd.id = p.idday  WHERE p.ranking5 = @maxRank AND p.idday = @idDay", new { maxRank = maxRank, idDay = idDay }, t);
+
+            if (playerAwarded != null)
+            {
+                var award = new Award
+                {
+                    IdDay = idDay,
+                    IdGroup = idGroup,
+                    IdStage = idStage,
+                    IdTournament = idTournament,
+
+                    IdPlayer = playerAwarded.IdPlayer,
+                    IdTeam = playerAwarded.IdTeam,
+                    Type = (int)AwardType.DreamTeam,
                 };
 
                 c.Insert(award, t);

@@ -70,11 +70,11 @@ namespace webapi.Models.Db
         public int CardsType4 { get; set; }
         public int CardsType5 { get; set; }
 
-        public int Ranking1 { get; set; }
-        public int Ranking2 { get; set; }
-        public int Ranking3 { get; set; }
-        public int Ranking4 { get; set; }
-        public int Ranking5 { get; set; }
+        public int Ranking1 { get; set; }   // Scorers
+        public int Ranking2 { get; set; }   // Goalkeepers
+        public int Ranking3 { get; set; }   // Assitances
+        public int Ranking4 { get; set; }   // MVPs
+        public int Ranking5 { get; set; }   // DreamTeam
 
         public int Data1 { get; set; }      // Num.of accumulated yellow cards for automatic cycle sanctions, filled with each yellow card event, but discounted with sanction rules. Automatic sanctions generate a hidden event that discounts this value. 
         public int Data2 { get; set; }
