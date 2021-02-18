@@ -504,6 +504,10 @@ namespace webapi.Models.Db
 
         private static void AddMvpAward(IDbConnection c, IDbTransaction t, Match match, MatchEvent ev)
         {
+            var homeTeam = c.Get<Team>(match.IdHomeTeam);
+            var visitorTeam = c.Get<Team>(match.IdVisitorTeam);
+
+
             var award = new Award
             {
                 IdDay = match.IdDay,
@@ -514,6 +518,7 @@ namespace webapi.Models.Db
                 IdPlayer = ev.IdPlayer,
                 IdTeam = ev.IdTeam,
                 Type = (int)AwardType.MVP,
+                Text1 = homeTeam.Name + " vs " + visitorTeam.Name,
             };
 
             c.Insert(award, t);

@@ -16,6 +16,7 @@ namespace webapi.Models.Db
         public long IdStage { get; set; }
         public long IdGroup { get; set; }
         public int Type { get; set; }
+        public string Text1 { get; set; }
 
         [Write(false)] public Player Player { get; set; }
         [Write(false)] public PlayDay Day { get; set; }
