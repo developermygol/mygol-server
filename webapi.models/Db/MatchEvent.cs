@@ -16,7 +16,6 @@ namespace webapi.Models.Db
         public const int TournamentPointsForWinning = 3;
         public const int TournamentPointsForDraw = 1;
 
-
         public long IdMatch { get; set; }
         public long IdTeam { get; set; }
         public long IdPlayer { get; set; }
