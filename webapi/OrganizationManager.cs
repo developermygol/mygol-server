@@ -43,6 +43,14 @@ namespace webapi
             }
         }
 
+        public static string GetOrgApiUrl(HttpRequest request)
+        {
+            var result = GetConfigForRequest(request).ApiUrl;
+            if (result == null || result == "") throw new Exception("Error.NoUploadPath");
+
+            return result;            
+        }
+
         public static string GetOrgUploadPath(HttpRequest request)
         {
             var result = GetConfigForRequest(request).UploadsBaseUrl;

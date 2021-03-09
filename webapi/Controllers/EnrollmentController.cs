@@ -206,14 +206,33 @@ namespace webapi.Controllers
 
                 var orgSecrets = GetOrgWithSecrets(c, t);
 
-                // Now, call the payment gateway with the card token and amount. 
-                var charge = await StripeApi.SendCharge(orgSecrets.PaymentKey, cardToken, orgSecrets.PaymentCurrency, amount, orgSecrets.PaymentDescription);
-                if (!charge.Paid) throw new Exception("Error.PaymentFailed");
+                if(orgSecrets.PaymentGetawayType != "paypal") // Stripe
+                {
+                    // Now, call the payment gateway with the card token and amount. 
+                    var charge = await StripeApi.SendCharge(orgSecrets.PaymentKey, cardToken, orgSecrets.PaymentCurrency, amount, orgSecrets.PaymentDescription);
+                    if (!charge.Paid) throw new Exception("Error.PaymentFailed");
+                    dbTeamPlayer.EnrollmentPaymentData = charge.Id;
 
-                dbTeamPlayer.EnrollmentPaymentData = charge.Id;
+                    // Add user event for payment
+                    LogPaymentEvent(c, t, charge, enroll.IdPlayer, enroll.IdTeam, enroll.IdTournament);
+                }
+                else 
+                {
+                    // Paypal has already process the payment.
+                    var ev = new UserEvent
+                    {
+                        IdCreator = GetUserId(),
+                        IdUser = GetUserId(),
+                        TimeStamp = DateTime.Now,
+                        Description = Localization.Get("Pago de inscripción", null),
+                        Type = (int)UserEventType.PlayerPaymentSuccess,
+                        Data1 = enroll.PaymentGatewayResult,
+                        Data2 = amount.ToString("N2"),
+                        Data3 = enroll.IdTeam.ToString()
+                    };
 
-                // Add user event for payment
-                LogPaymentEvent(c, t, charge, enroll.IdPlayer, enroll.IdTeam, enroll.IdTournament);
+                    c.Insert(ev, t);
+                }
 
                 // Notify org admins there is a new enrollment pending verification
                 var (userName, teamName, tournamentName) = GetPlayerTeamTournament(c, t, GetUserId(), dbTeamPlayer.IdTeam, enroll.IdTournament);

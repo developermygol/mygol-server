@@ -44,6 +44,7 @@ namespace webapi.Models.Db
         public int TermsVersion { get; set; }
 
         public string PaymentKeyPublic { get; set; }
+        public string PaymentGetawayType { get; set; }
 
         //public object FrontPageLayoutData { get; set; }
 
@@ -56,7 +57,7 @@ namespace webapi.Models.Db
 
     [Table("organizations")]
     public class OrganizationWithSecrets: PublicOrganization
-    {
+    {        
         public string PaymentKey { get; set; }
         public string PaymentDescription { get; set; }
         public string PaymentCurrency { get; set; }
