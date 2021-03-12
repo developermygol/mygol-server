@@ -1,0 +1,85 @@
+[33mcommit 8d5680538fddca2a6ca7a9796818930da7600003[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m
+Author: L4wl3sS <l4wl3ss1989@gmail.com>
+Date:   Thu Jan 28 09:22:12 2021 +0100
+
+    Set Timer and New match notify 3 days before match
+
+[1mdiff --git a/webapi/ApiTimer.cs b/webapi/ApiTimer.cs[m
+[1mindex a0db73f..d698e66 100644[m
+[1m--- a/webapi/ApiTimer.cs[m
+[1m+++ b/webapi/ApiTimer.cs[m
+[36m@@ -28,14 +28,4 @@[m [mnamespace webapi[m
+         }[m
+ [m
+     }[m
+[31m-}[m
+[31m-[m
+[31m-[m
+[31m-/*[m
+[31m- // 🚧🚧🚧🚧 Set timer[m
+[31m-            System.Timers.Timer test = new System.Timers.Timer(2000);[m
+[31m-            test.Enabled = true;[m
+[31m-            test.AutoReset = false;[m
+[31m-            test.Elapsed += Test_Elapsed;[m
+[31m-            // [REMOVE] => test.Elapsed -= TimerOnElapsed;[m
+[31m- */[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/webapi/Controllers/MatchesController.cs b/webapi/Controllers/MatchesController.cs[m
+[1mindex 1abc5a0..1688d9e 100644[m
+[1m--- a/webapi/Controllers/MatchesController.cs[m
+[1m+++ b/webapi/Controllers/MatchesController.cs[m
+[36m@@ -825,23 +825,24 @@[m [mnamespace webapi.Controllers[m
+             // When match is created, make sure the stageGroup is marcked as having a calendar[m
+             SetGroupHasCalendarFlag(c, t, value.IdGroup);[m
+ [m
+[31m-            // 🚧🚧🚧 [m
+[31m-            /*[m
+[31m-            int now = (int)(DateTime.Now.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalMilliseconds;[m
+[31m-            int threeDaysBeforeMatch = (int)(value.StartTime.AddDays(-3) - new DateTime(1970, 1, 1)).TotalMilliseconds;[m
+[31m-[m
+[31m-            if(threeDaysBeforeMatch < now)[m
+[32m+[m[32m            if(value.StartTime != DateTime.MinValue) // No date defined[m
+             {[m
+[31m-                int timer = now - threeDaysBeforeMatch;[m
+[31m-                timer = 2000;[m
+[32m+[m[32m                var timeNow = DateTime.UtcNow - new DateTime(1970, 1, 1);[m
+[32m+[m[32m                var timeThreeDaysBeforeMatch = value.StartTime.AddDays(-3) - new DateTime(1970, 1, 1);[m
+[32m+[m[32m                double nowTime = timeNow.TotalMilliseconds;[m
+[32m+[m[32m                double threeDaysBeforeMatch = timeThreeDaysBeforeMatch.TotalMilliseconds;[m
+ [m
+[31m-                int x = 0;[m
+[32m+[m[32m                if(nowTime < threeDaysBeforeMatch)[m
+[32m+[m[32m                {[m
+[32m+[m[32m                    int timer = Convert.ToInt32(threeDaysBeforeMatch - nowTime); // miliseconds till threeDaysBeforeMatch[m
+ [m
+[31m-                ApiTimer.SetTimer(timer, (object sender, System.Timers.ElapsedEventArgs e) => {[m
+[31m-                    NotificationsController.NotifyMatch(c, t, value, "Horario de tu partido", $"Recordatorio {value.HomeTeam.Name} vs {value.VisitorTeam.Name} empiezael  dia {value.StartTime.Day} de {value.StartTime.Month} a las {value.StartTime.Hour}:{value.StartTime.Minute} en {value.Field.Name}");[m
+[31m-                });[m
+[31m-            } [m
+[31m-            */[m
+[32m+[m[32m                    ApiTimer.SetTimer(timer, (object sender, System.Timers.ElapsedEventArgs e) => {[m
+[32m+[m[32m                        string title = Translation.Get("Push.MatchSchedule.Player.Title");[m
+[32m+[m[32m                        string message = Translation.Get("Push.MatchSchedule.Player.Text", Translation.MatchFormatedString(value));[m
+[32m+[m[32m                        NotificationsController.NotifyMatch(c, t, value, title, message);[m
+[32m+[m[32m                    });[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+ [m
+             return base.AfterNew(value, c, t);[m
+         }[m
+[1mdiff --git a/webapi/Controllers/SanctionsController.cs b/webapi/Controllers/SanctionsController.cs[m
+[1mindex d079a0a..de99e15 100644[m
+[1m--- a/webapi/Controllers/SanctionsController.cs[m
+[1m+++ b/webapi/Controllers/SanctionsController.cs[m
+[36m@@ -256,7 +256,8 @@[m [mnamespace webapi.Controllers[m
+                 IdUser = idCreator,[m
+                 Date = DateTime.Now,[m
+                 Status = (int)SanctionAllegationStatus.Created,[m
+[31m-                Title = Localization.Get("Resolución comité de competición", null),[m
+[32m+[m[32m                //Title = Localization.Get("Resolución comité de competición", null),[m
+[32m+[m[32m                Title = Translation.Get("FirstSanctionAllegationTitle"),[m
+                 Visible = true[m
+             };[m
+ [m

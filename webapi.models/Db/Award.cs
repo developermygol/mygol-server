@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace webapi.Models.Db
 {
+    [Table("awards")]
     public class Award: BaseObject
     {
         public long IdPlayer { get; set; }
@@ -15,7 +16,9 @@ namespace webapi.Models.Db
         public long IdStage { get; set; }
         public long IdGroup { get; set; }
         public int Type { get; set; }
+        public string Text1 { get; set; }
 
+        [Write(false)] public Player Player { get; set; }
         [Write(false)] public PlayDay Day { get; set; }
         [Write(false)] public Tournament Tournament { get; set; }
         [Write(false)] public Team Team { get; set; }

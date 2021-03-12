@@ -51,6 +51,7 @@ namespace webapi.Controllers
                 match.Field = GetField(c, match.IdField);
                 match.Day = GetPlayDay(c, match.IdDay);
                 match.SanctionsMatch = GetSanctionsMatch(c, match.Id);
+                match.PlayersNotices = GetPlayersNotices(c, match);
 
                 return match;
             });
@@ -112,6 +113,8 @@ namespace webapi.Controllers
 
                 var dbMatch = c.Get<Match>(value.Id);
                 if (dbMatch == null) throw new Exception("Error.NotFound");
+
+                AfterDelete(value, c, t);
 
                 var result = c.Delete(value, t);
 
@@ -438,6 +441,25 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpGet("playerteamacceptednotices/{idPlayer}/{idTeam}/{idTournament}")]
+        public IActionResult PlayerTeamAcceptedNotices(int idPlayer, int idTeam, int idTournament)
+        {
+            return DbOperation(c =>
+            {
+                return GetPlayerTeamAccpetedNotices(c, idPlayer, idTeam, idTournament);
+            });
+                
+        }
+
+        [HttpGet("playermatchnotices/{idPlayer}/{idTeam}/{idMatch}/{idTournament}")]
+        public IActionResult PlayerMatchAcceptedNotices(int idPlayer, int idTeam, int idMatch, int idTournament)
+        {
+            return DbOperation(c =>
+            {
+                return GetPlayerMatchNotices(c, idPlayer, idTeam, idMatch, idTournament);
+            });
+
+        }
 
         // __ Write actions ___________________________________________________
 
@@ -758,6 +780,26 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpPut("acceptplayernotice")]
+        public IActionResult AcceptPlayerNotice([FromBody] MatchPlayerNotice data)
+        {
+            return DbTransaction((c, t) =>
+            {
+                if (data == null) throw new NoDataException();
+
+                // 🔎 If notice hoursinadvance == -1 will update all team player matches to accepted
+                bool isOnlyOnceNotice = data.Notice.HoursInAdvance == -1;
+                string updateAllMatchesPlayerNotices = $" AND idmatch =  {data.IdMatch} ";
+
+                // if (!IsOrganizationAdmin()) throw new UnauthorizedAccessException();
+
+                string query = $"UPDATE matchplayersnotices SET accepted = true, accepteddate = '{DateTime.UtcNow}' WHERE idplayer = {data.IdPlayer} AND idteam = {data.IdTeam} AND idnotice = {data.IdNotice} {(isOnlyOnceNotice == true ? "" : updateAllMatchesPlayerNotices)};";
+
+                c.Execute(query, t);
+
+                return true;
+            });
+        }
 
         // __ CRUD ____________________________________________________________
 
@@ -842,9 +884,18 @@ namespace webapi.Controllers
                         NotificationsController.NotifyMatch(c, t, value, title, message);
                     });
                 }
+                                
+                GenerateMatchPlayersNoitces(c, value);
             }
 
             return base.AfterNew(value, c, t);
+        }
+
+        protected override object AfterDelete(Match value, IDbConnection c, IDbTransaction t)
+        {
+            RemoveMatchPlayersNotices(c, value);
+
+            return base.AfterDelete(value, c, t);
         }
 
         protected override bool ValidateNew(Match value, IDbConnection c, IDbTransaction t)
@@ -857,6 +908,68 @@ namespace webapi.Controllers
 
 
         // __ Helpers _________________________________________________________
+        private void RemoveMatchPlayersNotices(IDbConnection c, Match match)
+        {
+            var notices = c.Query<Notice>($"SELECT * FROM notices WHERE idtournament = {match.IdTournament};");
+
+            if (notices.Count() > 0)
+            {
+                match.HomePlayers = GetTeamPlayersForMatch(c, match.Id, match.IdHomeTeam, match.IdDay, true);
+                match.VisitorPlayers = GetTeamPlayersForMatch(c, match.Id, match.IdVisitorTeam, match.IdDay, true);
+
+                foreach (Notice notice in notices)
+                {
+                    foreach (Player player in match.HomePlayers)
+                    {
+                        c.Execute($"DELETE FROM matchplayersnotices WHERE idplayer = {player.Id} AND idteam = {match.IdHomeTeam} AND idday = {match.IdDay} AND idmatch = {match.Id} AND idnotice = {notice.Id}");
+                    }
+
+                    foreach (Player player in match.VisitorPlayers)
+                    {
+                        c.Execute($"DELETE FROM matchplayersnotices WHERE idplayer = {player.Id} AND idteam = {match.IdVisitorTeam} AND idday = {match.IdDay} AND idmatch = {match.Id} AND idnotice = {notice.Id}");
+                    }
+                }
+            }
+        }
+        
+        private void GenerateMatchPlayersNoitces(IDbConnection c, Match match)
+        {
+            var notices = c.Query<Notice>($"SELECT * FROM notices WHERE idtournament = {match.IdTournament};");
+
+            if(notices.Count() > 0)
+            {
+                match.HomePlayers = GetTeamPlayersForMatch(c, match.Id, match.IdHomeTeam, match.IdDay, true);
+                match.VisitorPlayers = GetTeamPlayersForMatch(c, match.Id, match.IdVisitorTeam, match.IdDay, true);
+                
+                foreach (Notice notice in notices)
+                {
+                    
+                    bool isOnlyOnceNotice = notice.HoursInAdvance == -1;
+                    bool acceptedNotice = false; // If is notice hoursinadvance, check if any has allready accepted and set all to accpeted => true
+
+                    foreach (Player player in match.HomePlayers)
+                    {
+                        if(isOnlyOnceNotice == true)
+                        {
+                            var anyAcceptedNotice = c.Query($"Select matchplayersnotices WHERE idplayer = {player.Id} AND idteam = {match.IdHomeTeam} AND idnotice = {notice.Id} AND accepted = true;");
+                            if (anyAcceptedNotice.Count() > 0) acceptedNotice = true;
+                        }
+
+                        c.Execute($"INSERT INTO matchplayersnotices(idmatch, idplayer, idteam, idUser, idday, accepted, idnotice) VALUES({match.Id}, {player.Id}, {match.IdHomeTeam}, {player.UserData.Id}, {match.IdDay}, {acceptedNotice}, {notice.Id})");
+                    }
+
+                    foreach (Player player in match.VisitorPlayers)
+                    {
+                        if (isOnlyOnceNotice == true)
+                        {
+                            var anyAcceptedNotice = c.Query($"Select matchplayersnotices WHERE idplayer = {player.Id} AND idteam = {match.IdVisitorTeam} AND idnotice = {notice.Id} AND accepted = true;");
+                            if (anyAcceptedNotice.Count() > 0) acceptedNotice = true;
+                        }
+                        c.Execute($"INSERT INTO matchplayersnotices(idmatch, idplayer, idteam, idUser, idday, accepted, idnotice) VALUES({match.Id}, {player.Id}, {match.IdVisitorTeam}, {player.UserData.Id}, {match.IdDay}, false, {notice.Id})");
+                    }
+                }
+            }
+        }
         private bool isFieldAvailable(IDbConnection c, Match match)
         {
             long idField = match.IdField;
@@ -984,7 +1097,61 @@ namespace webapi.Controllers
             return c.Query<MatchEvent>("SELECT * FROM matchevents WHERE idMatch = @idMatch ORDER BY matchMinute DESC, timeStamp DESC", new { idMatch = idMatch });
         }
 
-        // 🚧🚧🚧
+        private static IEnumerable<MatchPlayerNotice> GetPlayerTeamAccpetedNotices(IDbConnection c, int idPlayer, int idTeam, int idTournament)
+        {
+            string sql = @"
+                    SELECT mp.idnotice, mp.*, n.id, n.name, n.text, n.confirmationtext1, n.confirmationtext2, n.confirmationtext3, n.acceptTExt, n.hoursinadvance, n.enabled, n.idtournament
+                    FROM matchplayersnotices mp
+                    INNER JOIN notices n ON n.id = mp.idnotice
+                    WHERE n.idtournament = @idTournament AND mp.idPlayer = @idPlayer AND mp.idteam = @idTeam AND mp.accepted = true
+                    ";
+            return c.Query<MatchPlayerNotice, Notice, MatchPlayerNotice>(sql,
+                (matchPlayerNotice, notice) =>
+                {
+                    matchPlayerNotice.Notice = notice;
+                    return matchPlayerNotice;
+                },
+                new { idPlayer = idPlayer, idTeam = idTeam, idTorunament = idTournament },
+                splitOn: "idnotice, id");
+        }
+
+        private static IEnumerable<MatchPlayerNotice> GetPlayerMatchNotices(IDbConnection c, int idPlayer, int idTeam, int idMatch, int idTournament)
+        {
+            string sql = @"
+                    SELECT mp.idnotice, mp.*, n.id, n.name, n.text, n.confirmationtext1, n.confirmationtext2, n.confirmationtext3, n.acceptTExt, n.hoursinadvance, n.enabled, n.idtournament
+                    FROM matchplayersnotices mp
+                    INNER JOIN notices n ON n.id = mp.idnotice
+                    WHERE n.idtournament = @idTournament AND mp.idPlayer = @idPlayer AND mp.idteam = @idTeam AND mp.idmatch = @idMatch
+                    ";
+            return c.Query<MatchPlayerNotice, Notice, MatchPlayerNotice>(sql,
+                (matchPlayerNotice, notice) =>
+                {
+                    matchPlayerNotice.Notice = notice;
+                    return matchPlayerNotice;
+                },
+                new { idPlayer = idPlayer, idTeam = idTeam, idMatch = idMatch, idTorunament = idTournament },
+                splitOn: "idnotice, id");
+        }
+
+        private static IEnumerable<MatchPlayerNotice> GetPlayersNotices(IDbConnection c, Match match)
+        {
+            string sql = @"
+                    SELECT mp.idnotice, mp.*, n.id, n.name, n.text, n.confirmationtext1, n.confirmationtext2, n.confirmationtext3, n.acceptTExt, n.hoursinadvance, n.enabled, n.idtournament
+                    FROM matchplayersnotices mp
+                    INNER JOIN notices n ON n.id = mp.idnotice
+                    WHERE mp.idmatch = @idMatch AND mp.idday = @idDay
+                    ";
+
+            return c.Query<MatchPlayerNotice, Notice, MatchPlayerNotice>(sql,
+                (matchPlayerNotice, notice) =>
+                {
+                    matchPlayerNotice.Notice = notice;
+                    return matchPlayerNotice;
+                },
+                new { idMatch = match.Id, idDay = match.IdDay},
+                splitOn: "idnotice, id");
+        }
+
         private static IEnumerable<Sanction> GetSanctionsMatch(IDbConnection c, long idMatch)
         {
             return c.Query<Sanction>("SELECT * FROM sanctions WHERE idMatch = @idMatch", new { idMatch = idMatch });
@@ -1181,7 +1348,6 @@ namespace webapi.Controllers
             var interval = startTime - DateTime.Now;
             return (interval.TotalDays < 3);
         }
-
 
         private readonly NotificationManager mNotifier;
     }

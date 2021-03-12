@@ -42,6 +42,8 @@ namespace webapi.Models.Db
 
         TournamentLogo          = 300,
 
+        BadgesImage             = 400,
+
         OrgContent              = 500,  // Images from CMS
         OrgSponsor              = 501,
         OrgLogo                 = 502, 

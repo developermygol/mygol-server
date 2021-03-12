@@ -1,0 +1,183 @@
+﻿<html>
+<head>
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            height: 38.32cm;
+            /*width: 21cm;*/
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .page-break {
+            page-break-after: always;
+            page-break-inside: avoid;
+            clear: both;
+        }
+        .Container {
+            /*height: 100%;*/
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            margin: 1rem;
+            border: 1px solid lightgrey;
+        }
+        .Card {
+            flex: 1;
+            flex-basis: 50%;
+            max-width: 50%;
+            display: flex;
+            flex-direction: row;
+            border-top: 1px solid lightgrey;
+        }
+        .Card:nth-child(1), .Card:nth-child(2) {
+            border-top: none;
+        }
+
+        .Card:nth-child(odd) {
+            border-right: 1px solid lightgrey;
+        }
+        .Col-Left {
+            flex: 1.75;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .Col-Center {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+        }
+        .Col-Right {
+            flex: 1.25;
+        }
+        .image-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            margin: 1rem;
+        }
+        .image {
+            width: 130px;
+            max-height: 130px;
+            height: auto;
+        }
+        .image-small {
+            height: auto;
+            width: 75px;
+            max-height: 75px;
+        }
+        .Row {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            color: #000000;
+        }
+        .Row.Bottom {
+            justify-content: flex-end;
+        }
+        .Field {
+            margin-bottom: .5rem;
+        }
+        .Complex {
+            margin-bottom: .5rem;
+            display: flex;
+        }
+        .Item {
+            margin-right: 15px;
+        }
+        .Field__label {
+            font-size: 0.75rem;
+        }
+        .Field__value {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .mTop {
+            margin: 1rem 0 0 0;
+        }
+        .mNone {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    {{#each Players}}
+    {{intial}}
+    <div class="Card">
+        <div class="Col-Left">
+            <div class="image-container">
+                {{#fields 'PFF_PlayerFilePicture'}}{{avatar}}{{/fields}}
+            </div>
+            <div class="image-container">
+                {{#fields 'PFF_TeamLogo'}}<img class="image" src="{{TeamLogo}}" alt="player">{{/fields}}
+            </div>
+        </div>
+        <div class="Col-Center">
+            <div class="Row Bottom">
+                <div class="Field">
+                    <div class="Field__label">{{LabelName}}</div>
+                    <div class="Field__value">{{#fields 'PFF_PlayerName'}}{{Name}}{{/fields}} {{#fields 'PFF_PlayerSurname'}}{{Surname}}{{/fields}}</div>
+                </div>
+                <div class="Complex">
+                    <div class="Item">
+                        {{#fields 'PFF_IdCardNumber'}}
+                        <div class="Field__label">{{LabelIdCard}}</div>
+                        <div class="Field__value">{{IdCardNumber}}</div>
+                        {{/fields}}
+                    </div>
+                    <div class="Item">
+                        {{#fields 'PFF_PlayerId'}}
+                        <div class="Field__label">{{LabelIdNumber}}</div>
+                        <div class="Field__value">{{Id}}</div>
+                        {{/fields}}
+                    </div>
+                </div>
+            </div>
+            <div class="Row">
+                <div class="Field">
+                    {{#fields 'PFF_TournamentName'}}
+                    <div class="Field__label">{{LabelTournament}}</div>
+                    <div class="Field__value">{{TournamentName}}</div>
+                    {{/fields}}
+                </div>
+                <div class="Field">
+                    {{#fields 'PFF_TeamName'}}
+                    <div class="Field__label">{{LabelTeam}}</div>
+                    <div class="Field__value">{{TeamName}}</div>
+                    {{/fields}}
+                </div>
+                <div class="Complex">
+                    <div class="Item">
+                        {{#fields 'PFF_TeamApparelNumber'}}
+                        <div class="Field__label">{{LabelApparelNumber}}</div>
+                        <div class="Field__value">{{ApparelNumber}}</div>
+                        {{/fields}}
+                    </div>
+                    <div class="Item">
+                        {{#fields 'PFF_Role'}}
+                        <div class="Field__label">{{LabelRole}}</div>
+                        <div class="Field__value">{{FieldPosition}}</div>
+                        {{/fields}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="Col-Right">
+            <div class="image-container mTop">
+                {{#fields 'PFF_OrganizationLogo'}}<img class="image-small" src="{{OrgLogo}}" alt="roganization">{{/fields}}
+            </div>
+            <div class="Field mTop">
+                {{#fields 'PFF_BirthDate'}}
+                <div class="Field__label">{{LabelBirthDate}}</div>
+                <div class="Field__value">{{BirthDate}}</div>
+                {{/fields}}
+            </div>
+        </div>
+    </div>
+    {{final}}
+    {{/each}}
+</body>
+</html>

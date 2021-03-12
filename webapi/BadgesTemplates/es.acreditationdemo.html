@@ -1,0 +1,284 @@
+﻿<html>
+<head>
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 38.35cm;
+            width: 21cm;
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+            /*background-color: green;*/
+        }
+
+        .page-break {
+            page-break-after: always;
+            page-break-inside: avoid;
+            clear: both;
+        }
+
+        .Container {
+            height: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            /*background-color: orange;*/
+        }
+
+        .Card {
+            flex-basis: 50%;
+            max-height: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            /*background-color: red;*/
+        }
+
+        .Card__header {
+            display: flex;
+            align-items: center;
+            margin: 2rem;
+            /*background-color: blue;*/
+        }
+
+        .Card__body {
+            flex: 2;
+            margin: 0 2rem;
+            /*background-color: pink;*/
+        }
+
+        .image-container {
+            flex: 1;
+            padding: 0.5rem;
+        }
+
+        .image {
+            height: auto;
+            width: 150px;
+        }
+
+        .userimage {
+            border: 2px solid;
+        }
+
+        .Row {
+            flex: 1;
+            display: flex;
+            margin-bottom: 2rem;
+        }
+
+        .Field {
+            flex: 1;
+        }
+
+        .Field-left {
+            flex: 1;
+        }
+
+        .Field-rigth {
+            flex: 2;
+        }
+
+        .Field-rigth-complex {
+            flex: 2;
+            display: flex;
+        }
+
+        .Item {
+            margin-right: 15px;
+        }
+
+        .Field__label {
+            font-size: 0.6rem;
+        }
+
+        .Field__value {
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="Container">
+        <div class="Card">
+            <div class="Card__header">
+                <div class="image-container">
+                    <img class="image" src="https://lh3.googleusercontent.com/ogw/ADGmqu_2AiFBXp9FoopVMy-uMYx5FHOZtb5AIBTWr9Md=s83-c-mo" alt="">
+                </div>
+                <div class="image-container">
+                    <img class="image" src="https://bancopruebastsm2.mygol.es/upload/27/7E/1cjiirv2.png" alt="">
+                </div>
+
+            </div>
+            <div class="Card__body">
+                <div class="Row">
+                    <div class="Field">
+                        <div class="Field__label">Nombre</div>
+                        <div class="Field__value">Jhon Snow</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field">
+                        <div class="Field__label">Núm. licencia</div>
+                        <div class="Field__value">53</div>
+                    </div>
+                    <div class="Field">
+                        <div class="Field__label">DNI</div>
+                        <div class="Field__value">78099341N</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left">
+                        <div class="Field__label">Fecha de nacimiento</div>
+                        <div class="Field__value">20/08/1989</div>
+                    </div>
+                    <div class="Field-rigth">
+                        <div class="Field__label">Competición</div>
+                        <div class="Field__value">Test Competition</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left"></div>
+                    <div class="Field-rigth">
+                        <div class="Field__label">Equipo</div>
+                        <div class="Field__value">Test Team AAA</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left"></div>
+                    <div class="Field-rigth-complex">
+                        <div class="Item">
+                            <div class="Field__label">Dorsal</div>
+                            <div class="Field__value">23</div>
+                        </div>
+                        <div class="Item">
+                            <div class="Field__label">Rol</div>
+                            <div class="Field__value">Jugador</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="Card">
+            <div class="Card__header">
+                <div class="image-container">
+                </div>
+                <div class="image-container">
+                    <img class="image" src="https://bancopruebastsm2.mygol.es/upload/27/7E/1cjiirv2.png" alt="">
+                </div>
+            </div>
+            <div class="Card__body">
+                <div class="Row">
+                    <div class="Field">
+                        <div class="Field__label">Nombre</div>
+                        <div class="Field__value">Jhon Snow</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field">
+                        <div class="Field__label">Núm. licencia</div>
+                        <div class="Field__value">53</div>
+                    </div>
+                    <div class="Field">
+                        <div class="Field__label">DNI</div>
+                        <div class="Field__value">78099341N</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left">
+                        <div class="Field__label">Fecha de nacimiento</div>
+                        <div class="Field__value">20/08/1989</div>
+                    </div>
+                    <div class="Field-rigth">
+                        <div class="Field__label">Competición</div>
+                        <div class="Field__value">Test Competition</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left"></div>
+                    <div class="Field-rigth">
+                        <div class="Field__label">Equipo</div>
+                        <div class="Field__value">Test Team AAA</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left"></div>
+                    <div class="Field-rigth-complex">
+                        <div class="Item">
+                            <div class="Field__label">Dorsal</div>
+                            <div class="Field__value">23</div>
+                        </div>
+                        <div class="Item">
+                            <div class="Field__label">Rol</div>
+                            <div class="Field__value">Jugador</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="Card">
+            <div class="Card__header">
+                <div class="image-container">
+                    <img class="image" src="https://lh3.googleusercontent.com/ogw/ADGmqu_2AiFBXp9FoopVMy-uMYx5FHOZtb5AIBTWr9Md=s83-c-mo" alt="">
+                </div>
+                <div class="image-container">
+                    <img class="image" src="https://bancopruebastsm2.mygol.es/upload/27/7E/1cjiirv2.png" alt="">
+                </div>
+
+            </div>
+            <div class="Card__body">
+                <div class="Row">
+                    <div class="Field">
+                        <div class="Field__label">Nombre</div>
+                        <div class="Field__value">Jhon Snow</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field">
+                        <div class="Field__label">Núm. licencia</div>
+                        <div class="Field__value">53</div>
+                    </div>
+                    <div class="Field">
+                        <div class="Field__label">DNI</div>
+                        <div class="Field__value">78099341N</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left">
+                        <div class="Field__label">Fecha de nacimiento</div>
+                        <div class="Field__value">20/08/1989</div>
+                    </div>
+                    <div class="Field-rigth">
+                        <div class="Field__label">Competición</div>
+                        <div class="Field__value">Test Competition</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left"></div>
+                    <div class="Field-rigth">
+                        <div class="Field__label">Equipo</div>
+                        <div class="Field__value">Test Team AAA</div>
+                    </div>
+                </div>
+                <div class="Row">
+                    <div class="Field-left"></div>
+                    <div class="Field-rigth-complex">
+                        <div class="Item">
+                            <div class="Field__label">Dorsal</div>
+                            <div class="Field__value">23</div>
+                        </div>
+                        <div class="Item">
+                            <div class="Field__label">Rol</div>
+                            <div class="Field__value">Jugador</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-break"></div>
+    <div>TEST</div>
+</body>
+</html>

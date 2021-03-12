@@ -23,6 +23,9 @@ namespace webapi.Models.Db
         public int HomeScore { get; set; }
         public int VisitorScore { get; set; }
 
+        public int VisibleHomeScore { get; set; }
+        public int VisibleVisitorScore { get; set; }
+
         public string HomeTeamDescription { get; set; }         // To be displayed if no home team is defined
         public string VisitorTeamDescription { get; set; }      // To be displayed if no visitor team is defined
 
@@ -40,7 +43,9 @@ namespace webapi.Models.Db
         [Write(false)] public IEnumerable<MatchReferee> Referees { get; set; }
         [Write(false)] public IEnumerable<MatchEvent> Events { get; set; }
         [Write(false)] public Tournament Tournament { get; set; }
-        [Write(false)] public IEnumerable<Sanction> SanctionsMatch { get; set; } // 🚧🚧🚧
+        [Write(false)] public IEnumerable<Sanction> SanctionsMatch { get; set; }
+        [Write(false)] public IEnumerable<MatchPlayerNotice> PlayersNotices { get; set; }
+
 
         public bool IsScheduled()
         {
