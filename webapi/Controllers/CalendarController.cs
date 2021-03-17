@@ -518,11 +518,42 @@ namespace webapi.Controllers
                 ApplyRoundRobin(list1, list2);
             }
 
-            AdjustForLocalityPairs(result);
+            // Locale Visitor logic
+            // AdjustForLocalityPairs(result); // 💥
+            AdjustLocalVisitorPairs(result, n); // 🚧
 
+            // Inverse Locale Visitor logic round/2
             AddAdditionalRounds(result, numRounds);
 
             return result;
+        }
+
+        public static void AdjustLocalVisitorPairs(List<List<Match>> days, int numTeams)
+        {
+            for (int i = 0; i < days.Count; ++i)
+            {
+                var day = days[i];
+                if (day == null || day.Count == 0) throw new ArgumentNullException("day");
+
+                if(numTeams == 2)
+                {
+                    // EVEN
+                    for (int z = 0; z < day.Count; z++)
+                    {
+                        // EVEN
+                        if (z % 2 != 0)
+                        {
+                            var match = day[z];
+                            ReverseMatch(match);
+                        }
+                    }
+                }else
+                {
+                    var match = day[0]; // 🚧💥
+
+                    ReverseMatch(match);
+                }             
+            }
         }
 
         public static void AdjustForLocalityPairs(List<List<Match>> days)
