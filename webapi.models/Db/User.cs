@@ -19,4 +19,23 @@ namespace webapi.Models.Db
 
         [Write(false)] public string DeviceToken { get; set; }
     }
+
+    [Table("users")]
+    public class UserOrganization : BaseObject
+    {
+        public string Name { get; set; }
+        public int Level { get; set; }
+        public string AvatarImgUrl { get; set; }
+        public string Mobile { get; set; }
+        public string Lang { get; set; }
+    }
+
+    [Table("users")]
+    public class UserGlobal : BaseObject
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string Salt { get; set; }
+        public bool EmailConfirmed { get; set; }
+    }
 }

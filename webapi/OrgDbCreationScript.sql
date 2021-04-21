@@ -29,4 +29,15 @@ CREATE TABLE globalAdmins (
 
 CREATE UNIQUE INDEX globaladmins_id ON globaladmins (id);
 CREATE UNIQUE INDEX globaladmins_email ON globaladmins (email);
+
+CREATE TABLE users (
+    id              SERIAL PRIMARY KEY,
+    email                       TEXT,
+    password                    TEXT,
+    salt                        TEXT,
+    emailconfirmed              BOOLEAN
+);
+CREATE UNIQUE INDEX users_id ON globaladmins (id);
+CREATE UNIQUE INDEX users_email ON globaladmins (email);
+
 ALTER SEQUENCE globaladmins_id_seq RESTART WITH 10000000;

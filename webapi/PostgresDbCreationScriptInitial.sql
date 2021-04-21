@@ -27,16 +27,7 @@ CREATE TABLE organizations (
 	paymentKeyPublic	TEXT,
 	paymentDescription	TEXT,
 	paymentCurrency		TEXT,
-	defaultLang			TEXT,
-	sponsordata			TEXT,
-	dpcompanyname		TEXT,
-	dpcompanyid			TEXT,
-	dpcompanyaddress	TEXT,
-	dpcompanyemail		TEXT,
-	dpcompanyphone		TEXT,
-	appearancedata		TEXT,
-	termsversion		TEXT,
-	paymentgetawaytype	TEXT
+	defaultLang			TEXT
 );
 
 INSERT INTO organizations (name) VALUES ('Organization name not set');
@@ -85,13 +76,7 @@ CREATE TABLE tournaments (
 	idTournamentMode	INTEGER, 
 
 	logoImgUrl			TEXT,
-	visible				BOOLEAN DEFAULT 'f',
-
-	sponsordata			TEXT,
-	appearancedata		TEXT,
-	notificationflags	TEXT,
-	dreamteam			TEXT,
-	sequenceorder		INTEGER
+	visible				BOOLEAN DEFAULT 'f'
 );
 
 CREATE UNIQUE INDEX tournaments_id ON tournaments (id);
@@ -122,8 +107,7 @@ CREATE TABLE teams (
 	teamImgUrl	text,
 	teamImgUrl2 text, 
 	teamImgUrl3 text,
-	prefTime	timestamp,
-	idgoalkeeper INTEGER
+	prefTime	timestamp
 );
 
 CREATE UNIQUE INDEX teams_id ON teams (id);
@@ -137,8 +121,7 @@ CREATE TABLE tournamentstages (
 	type			INTEGER,
 	status			INTEGER DEFAULT 1,
 	sequenceOrder	INTEGER NOT NULL,
-	classificationCriteria TEXT,
-	colorconfig		TEXT
+	classificationCriteria TEXT 
 );
 
 CREATE INDEX tournamentstages_id ON tournamentstages (id);
@@ -188,9 +171,7 @@ CREATE TABLE playdays (
 	idGroup		 INTEGER,
 	name	TEXT NOT NULL,
 	dates	TEXT NOT NULL,	
-	sequenceOrder INTEGER,
-	status		INTEGER,
-	lastupdatetimestamp	TIMESTAMP
+	sequenceOrder INTEGER
 );
 
 CREATE INDEX playdays_id ON playdays (id);
@@ -302,7 +283,6 @@ CREATE TABLE notifications (
 	timestamp	TIMESTAMP,
 	text		TEXT,
 	text2		TEXT,
-	text3		TEXT,
 	data1		TEXT,
 	data2		TEXT,
 	apiActionLabel1		TEXT,
@@ -373,9 +353,7 @@ CREATE TABLE matches (
 	comments		TEXT, 
 	videoUrl		TEXT,
 	homeTeamDescription		TEXT, 
-	visitorTeamDescription	TEXT,
-	visiblehomescore		INTEGER,
-	visiblevisitorscore		INTEGER
+	visitorTeamDescription	TEXT
 );
 
 CREATE INDEX matches_id ON matches (id);
@@ -518,14 +496,7 @@ CREATE TABLE playerdayresults (
 	data2			INTEGER,
 	data3			INTEGER,
 	data4			INTEGER,
-	data5			INTEGER,
-
-	assistances		INTEGER,
-	mvppoints		INTEGER,
-	penaltypoints	INTEGER,
-	dreamteampoints	INTEGER,
-	penaltyfailed	INTEGER,
-	penaltystopped	INTEGER
+	data5			INTEGER
 );
 
 CREATE INDEX playerdayresults_idday ON playerdayresults (idDay);
@@ -627,8 +598,8 @@ CREATE TABLE awards (
 	idTournament	INTEGER,
 	idStage			INTEGER,
 	idGroup			INTEGER,
-	type			INTEGER,
-	text1			INTEGER
+	type			INTEGER
+	
 );
 
 CREATE UNIQUE INDEX awards_id ON awards (id);
@@ -744,33 +715,4 @@ CREATE UNIQUE INDEX sanctionmatches_id ON sanctionmatches (id);
 CREATE INDEX sanctionmatches_idmatch ON sanctionmatches (idmatch);
 CREATE INDEX sanctionmatches_idsanction ON sanctionmatches (idsanction);
 
-CREATE TABLE matchplayersnotices (
-	idMatch		INTEGER NOT NULL,
-	idPlayer	INTEGER NOT NULL,
-	idTeam		INTEGER NOT NULL,
-	idUser	    INTEGER NOT NULL,
-    idDay       INTEGER NOT NULL,
-    idNotice    INTEGER NOT NULL,
-    accepted    BOOLEAN NOT NULL,
-    accepteddate TIMESTAMP
-);
-CREATE UNIQUE INDEX matchplayersnotice_idmatch ON matchplayersnotices (idmatch);
-CREATE UNIQUE INDEX matchplayersnotice_idnotice ON matchplayersnotices (idnotice);
-CREATE UNIQUE INDEX matchplayersnotice_idplayer ON matchplayersnotices (idplayer);
-CREATE UNIQUE INDEX matchplayersnotice_idteam ON matchplayersnotices (idteam);
-CREATE UNIQUE INDEX matchplayersnotices_idday ON matchplayersnotices (idday);
 
-CREATE TABLE notices (
-    id	    SERIAL PRIMARY KEY,
-    name       TEXT NOT NULL,
-    text                        TEXT,
-    confirmationtext1           TEXT,
-    confirmationtext2           TEXT,
-    confirmationtext3           TEXT,
-    accepttext                  TEXT,
-    hoursinadvance  INTEGER NOT NULL,
-    idtournament    INTEGER NOT NULL,
-    enabled                 BOOLEAN
-);
-CREATE UNIQUE INDEX notices_id ON notices (id);
-CREATE UNIQUE INDEX notices_idtournament ON notices (idtournament);

@@ -30,7 +30,7 @@ namespace webapi
     public class PostgresqlDataLayer
     {
 
-        protected const int DatabaseVersion = 32;
+        protected const int DatabaseVersion = 33;
 
         //protected IDbConnection mConnection;        
 

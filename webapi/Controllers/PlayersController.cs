@@ -7,13 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SelectPdf;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using webapi.Models.Db;
@@ -617,7 +615,9 @@ namespace webapi.Controllers
 
             return DbTransaction( (c, t) =>
             {
-                Audit.Information(this, "{0}: Players.Unlink1: {idTeam} -> {idPlayer}", GetUserId(), idTeam, idPlayer);
+                long currentUserId = GetUserId();
+
+                Audit.Information(this, "{0}: Players.Unlink1: {idTeam} -> {idPlayer}", currentUserId, idTeam, idPlayer);
 
                 if (!IsOrganizationAdmin() && !IsTeamAdmin(idTeam, c)) throw new UnauthorizedAccessException();
 
@@ -628,28 +628,35 @@ namespace webapi.Controllers
                 };
 
                 var dbPlayer = c.Query<Player>("SELECT p.id, idUser FROM players p JOIN teamplayers tp ON tp.idPlayer = p.id WHERE idTeam = @idTeam AND idPlayer = @idPlayer", teamPlayer, t).GetSingle();
-                if (dbPlayer.IdUser == GetUserId()) throw new Exception("Error.CantUnlinkYourself");
+                if (dbPlayer.IdUser == currentUserId) throw new Exception("Error.CantUnlinkYourself");
 
                 var result = c.Delete(teamPlayer, t);
 
                 // Delete the possible paymentconfigs associated to this idteam - idplayer combo.
                 var numDeleted = c.Execute("DELETE FROM paymentconfigs WHERE idTeam = @idTeam AND idUser = @idUser", new { idTeam = idTeam, idUser = dbPlayer.IdUser }, t);
 
-                var mr = c.QueryMultiple(@"
+                var userFrom = UsersController.GetUserForId(c, t, currentUserId);
+                var userTo = UsersController.GetUserForId(c, t, dbPlayer.IdUser);
+                var team = c.QueryFirst<Team>($"SELECT id, name FROM teams WHERE id = {idTeam};");
+
+                /*var mr = c.QueryMultiple(@"
                     SELECT id, name, avatarImgUrl, email, mobile FROM users WHERE id = @idFrom;
                     SELECT u.id, u.name, u.avatarImgUrl, email, mobile FROM users u JOIN players p ON p.iduser = u.id AND p.id = @idPlayerTo;
                     SELECT id, name FROM teams WHERE id = @idTeam;
                 ",
-                new { idFrom = GetUserId(), idPlayerTo = idPlayer, idTeam = idTeam }, t);
+                new { idFrom = GetUserId(), idPlayerTo = idPlayer, idTeam = idTeam }, t);*/
 
                 var data = new PlayerNotificationData
                 {
-                    From = mr.ReadFirst<User>(),
+                    /*From = mr.ReadFirst<User>(),
                     To = mr.ReadFirst<User>(),
-                    Team = mr.ReadFirst<Team>()
+                    Team = mr.ReadFirst<Team>()*/
+                    From = userFrom,
+                    To = userTo,
+                    Team = team
                 };
 
-                Audit.Information(this, "{0}: Players.Unlink2: unlink {1} from {2}", GetUserId(), data.To.Name, data.Team.Name);
+                Audit.Information(this, "{0}: Players.Unlink2: unlink {1} from {2}", currentUserId, data.To.Name, data.Team.Name);
 
                 mNotifications.NotifyEmail(Request, c, t, TemplateKeys.EmailPlayerUnlinkHtml, data);
 
@@ -785,7 +792,7 @@ namespace webapi.Controllers
             return result;
         }
         
-        public static Player InsertPlayer(IDbConnection c, IDbTransaction t, Player player, long idCreator, bool isOrgAdmin, HashedPassword password = null, UserEventType eventType = UserEventType.PlayerCreated)
+        public static Player InsertPlayer(IDbConnection c, IDbTransaction t, Player player, long idCreator, bool isOrgAdmin, HashedPassword password = null, UserEventType eventType = UserEventType.PlayerCreated, HttpRequest request = null)
         {
             var level = (int)UserLevel.Player;
 
@@ -803,6 +810,11 @@ namespace webapi.Controllers
                 EmailConfirmed = false,
                 Mobile = player.UserData.Mobile
             };
+
+            // Inser User org > user and global > user
+            InserUserPropsInGlobalDirectory(newUser);
+
+            // 🚧 Id issue?
 
             var idUser = c.Insert(newUser, t);
             newUser.Id = idUser;
@@ -1126,8 +1138,10 @@ namespace webapi.Controllers
                     }
                     else
                     {
+                        string prevEmail = dc.QueryFirst<string>($"SELECT email FROM userorganization WHERE idUser = {idUser};");
                         dc.Execute("UPDATE userorganization SET email = @email WHERE idUser = @idUser AND organizationName = @orgName",
                         new { idUser = idUser, email = email, orgName = orgName }, t);
+                        dc.Execute($"UPDATE users SET email = '{email}' WHERE email = '{prevEmail}';");
                     }
 
                     t.Commit();
@@ -1151,8 +1165,12 @@ namespace webapi.Controllers
                 {
                     var orgName = OrganizationManager.GetConfigForRequest(request).Name;
 
+                    string email = directoryConn.QueryFirst<string>($"SELECT email FROM userorganization WHERE idUser = {idUser};");
+
                     directoryConn.Execute("DELETE FROM userorganization WHERE idUser = @idUser AND organizationName = @orgName",
                         new { idUser = idUser, orgName = orgName });
+
+                    directoryConn.Execute($"DELETE FROM users WHERE email = '{email}';");
                 }
             }
             catch (Exception ex)
@@ -1161,13 +1179,31 @@ namespace webapi.Controllers
             }
         }
 
-
+        public static void InserUserPropsInGlobalDirectory(User user)
+        {
+            using (var globalConn = GetGlobalDirectoryConn())
+            {
+                try
+                {
+                    globalConn.Insert(new UserGlobal
+                    {
+                        Email = user.Email,
+                        Password = user.Password,
+                        Salt = user.Salt,
+                        EmailConfirmed = user.EmailConfirmed
+                    });
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+        }
 
         private NotificationManager mNotifications;
         private AuthTokenManager mAuthTokenManager;
         private readonly HtmlSanitizer mSanitizer = new HtmlSanitizer();
     }
-
 
     public class PlayerApprovedInput
     {

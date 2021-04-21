@@ -1805,11 +1805,11 @@ namespace webapi
 
                 ALTER TABLE tournaments ADD COLUMN sponsordata TEXT;
                 ALTER TABLE tournaments ADD COLUMN appearancedata TEXT;
-                ALTER TABLE tournaments ADD COLUMN notificationflags TEXT;
-                ALTER TABLE tournaments ADD COLUMN notificationflagsnotificationflagsnotificationflags TEXT;
+                ALTER TABLE tournaments ADD COLUMN notificationflags TEXT;                
                 ALTER TABLE tournaments ADD COLUMN sequenceorder INTEGER;
+                ALTER TABLE tournaments ADD COLUMN dreamteam TEXT;
 
-                ALTER TABLE tournamentstages ADD COLUMN colorconfig text;    
+                ALTER TABLE tournamentstages ADD COLUMN colorconfig text;  
             ");
 
             return 33;
@@ -1817,7 +1817,7 @@ namespace webapi
 
         private int Undo32(IDbConnection conn, IDbTransaction t)
         {
-            mLogger($"33 -> 32: ");
+            mLogger($"33 -> 32: remove not aquired functionalities");
 
             conn.Execute(@"
                 ALTER TABLE awards DROP COLUMN text1;
@@ -1856,8 +1856,8 @@ namespace webapi
                 ALTER TABLE tournaments DROP COLUMN sponsordata;
                 ALTER TABLE tournaments DROP COLUMN appearancedata;
                 ALTER TABLE tournaments DROP COLUMN notificationflags;
-                ALTER TABLE tournaments DROP COLUMN notificationflagsnotificationflagsnotificationflags;
                 ALTER TABLE tournaments DROP COLUMN sequenceorder;    
+                ALTER TABLE tournaments DROP COLUMN dreamteam;
                 
                 ALTER TABLE tournamentstages DROP COLUMN colorconfig;            
             ");
@@ -1989,6 +1989,16 @@ namespace webapi
                 CREATE UNIQUE INDEX globaladmins_id ON globaladmins (id);
                 CREATE UNIQUE INDEX globaladmins_email ON globaladmins (email);
 
+                CREATE TABLE users (
+                    id              SERIAL PRIMARY KEY,
+                    email                       TEXT,
+                    password                    TEXT,
+                    salt                        TEXT,
+                    emailconfirmed              BOOLEAN
+                );
+                CREATE UNIQUE INDEX users_id ON globaladmins (id);
+                CREATE UNIQUE INDEX users_email ON globaladmins (email);
+
                 ALTER SEQUENCE globaladmins_id_seq RESTART WITH 10000000;
             ");
 
@@ -2001,6 +2011,7 @@ namespace webapi
 
             conn.Execute(@"
                 DROP TABLE globalAdmins;
+                DROP TABLE users;
             ");
 
             return 1;

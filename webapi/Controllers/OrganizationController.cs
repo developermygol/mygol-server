@@ -56,6 +56,33 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpGet("userexistandorganitzation/{email}")]
+        public IActionResult GetUserOrganizations(string email)
+        {
+            try
+            {
+                var orgForUser = GetOrgNameForEmail(email);
+                if (orgForUser == null) throw new Exception("Error.NonExistent");
+
+                return DbOperation(c =>
+                {
+                    var userOrg = c.Query<User>($"SELECT id FROM users WHERE email = '{email}'").FirstOrDefault();
+
+                    if (userOrg != null)
+                    {
+                        var simpleOrg = c.Query<PublicOrganization>($"SELECT name, motto FROM organizations").FirstOrDefault();
+                        return new { userId = userOrg.Id, organitzation = simpleOrg };
+                    }
+
+                    return false;
+                });
+            }
+            catch (Exception ex)
+            {
+                return Error(ex.Message);
+            }
+        }
+
         [HttpPut]
         public virtual IActionResult Update([FromBody] PublicOrganization value)
         {
@@ -117,6 +144,17 @@ namespace webapi.Controllers
                 c.Execute($"UPDATE organizations SET appearancedata = '{data.AppearanceJsonString}' WHERE id = {data.IdOrganization};");
                 return true;
             });
+        }
+
+        private string GetOrgNameForEmail(string email)
+        {
+            using (var c = GetGlobalDirectoryConn())
+            {
+                var user = c.QueryFirstOrDefault<GlobalUserOrganization>("SELECT organizationName FROM userorganization WHERE email iLIKE @email", new { email = email });
+                if (user == null) return null;
+
+                return user.OrganizationName;
+            }
         }
 
         private bool ValidateEdit(PublicOrganization val, IDbConnection c)
