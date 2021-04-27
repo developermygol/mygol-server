@@ -60,7 +60,7 @@ namespace webapi.Importers
 
                         // TODO: validate email / mobile doesn't exist already
 
-                        PlayersController.InsertPlayer(c, t, player, idCreator, true, hashPass, UserEventType.PlayerImported);
+                        PlayersController.InsertPlayer(c, t, player, player.UserData.Id, idCreator, true, hashPass, UserEventType.PlayerImported);
                     }
 
                     t.Commit();

@@ -66,7 +66,11 @@ namespace webapi.Controllers
 
                 return DbOperation(c =>
                 {
-                    var userOrg = c.Query<User>($"SELECT id FROM users WHERE email = '{email}'").FirstOrDefault();
+                    var userGlobal = UsersController.GetGlobalUserForEmail(email);
+                    if (userGlobal == null) return false;
+
+                    // var userOrg = c.Query<User>($"SELECT id FROM users WHERE email = '{email}'").FirstOrDefault();
+                    var userOrg = c.Query<User>($"SELECT id FROM users WHERE id = {userGlobal.Id}").FirstOrDefault();
 
                     if (userOrg != null)
                     {

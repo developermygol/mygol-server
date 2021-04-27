@@ -347,8 +347,12 @@ namespace webapi.Controllers
                 return GetGlobalAdminForEmail(email);
             }
 
-            var users = c.Query<User>("SELECT * FROM users WHERE id = @id", new { id = userGlobal.Id }, t);
-            var user = users.First();
+            var user = c.QueryFirstOrDefault<User>("SELECT * FROM users WHERE id = @id", new { id = userGlobal.Id }, t);
+            // No Org user swap to userGlobal values
+            if (user == null)
+            {
+                user = userGlobal;
+            }
 
             // This columns should not be in org>users anymore they should be in global>users
             user.Email = userGlobal.Email;
@@ -383,7 +387,7 @@ namespace webapi.Controllers
                 if (users.Count() != 1) return null;
 
                 var user = users.First();
-                var userOrgGlobal = c.QueryFirstOrDefault<User>($"SELECT iduser as id FROM userorganization WHERE email ilike '{email}'");
+                var userOrgGlobal = c.QueryFirstOrDefault<User>($"SELECT iduser AS id FROM userorganization WHERE email ilike '{email}'");
                 
                 if(userOrgGlobal != null) user.Id = userOrgGlobal.Id; // 💥🔎 NO well enteres users
 

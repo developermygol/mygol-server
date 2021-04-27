@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
+using Ganss.XSS;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -13,14 +14,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using webapi.Models.Db;
+using webapi.Models.Result;
 
 namespace webapi.Controllers
 {
 
     public class TeamsController : CrudController<Team>
     {
-        public TeamsController(IOptions<Config> config) : base(config)
+        public TeamsController(IOptions<Config> config, NotificationManager notif, AuthTokenManager authManager) : base(config)
         {
+            mNotifications = notif;
+            mAuthTokenManager = authManager;
         }
 
         [HttpGet("/api/tournaments/{idTournament}/teams")]
@@ -156,7 +160,7 @@ namespace webapi.Controllers
         {
             string fileContent = "";
 
-            DbOperation(c =>
+            DbTransaction((c,t)=>
             {
                 CheckAuthLevel(UserLevel.OrgAdmin);
 
@@ -166,7 +170,7 @@ namespace webapi.Controllers
 
                 // Tournament specific data: 
                 // - Team players
-                result.Players = GetPlayerTotals(c, idTeam, idTournament);
+                result.Players = GetPlayerTotals(c, t, idTeam, idTournament);
 
                 // Team Sponsors
                 result.Sponsors = c.Query<Sponsor>("SELECT * FROM sponsors WHERE idTeam = @id", new { id = idTeam });
@@ -183,7 +187,7 @@ namespace webapi.Controllers
         [HttpGet("{idTeam}/details/{idTournament}")]
         public IActionResult Details(long idTeam, long idTournament)
         {
-            return DbOperation(c =>
+            return DbTransaction((c, t)=>
             {
                 CheckAuthLevel(UserLevel.All);
 
@@ -198,7 +202,7 @@ namespace webapi.Controllers
                 {
                     // Tournament specific data: 
                     // - Team players
-                    result.Players = GetPlayerTotals(c, idTeam, idTournament);
+                    result.Players = GetPlayerTotals(c, t, idTeam, idTournament);
 
                     // - Team playDays with: 
                     //   - Matches
@@ -250,7 +254,11 @@ namespace webapi.Controllers
                 if (team == null) throw new NoDataException();
                 long idTeam = team.Id;
 
-                var existTeamQuery = conn.Query($"SELECT * FROM teams WHERE id = {team.Id} OR name = '{team.Name}' OR keyname = '{team.KeyName}';");
+                // var existTeamQuery = conn.Query($"SELECT * FROM teams WHERE id = {team.Id} OR name = '{team.Name}' OR keyname = '{team.KeyName}';");
+                
+                // 🔎 External Org team can overrrite team.id values so will make query more restrictive
+                var existTeamQuery = conn.Query($"SELECT * FROM teams WHERE id = {team.Id} AND name = '{team.Name}' AND keyname = '{team.KeyName}';");
+
                 bool teamExitst = existTeamQuery.Count() > 0;
                                 
                 if (!teamExitst)
@@ -258,29 +266,104 @@ namespace webapi.Controllers
                     // Add team and add Team to Tournament
                     Audit.Information(this, "{0}: Teams.CreateInTournament {idTournament} -> {Name}", GetUserId(), team.Name, idTournamnet);
                     var teamId = conn.Insert(team);
-                    conn.Insert(new TournamentTeam { IdTournament = idTournamnet, IdTeam = teamId });
-                    return true;
-
-                } 
-                var existsTeamInTournamentQuery = conn.Query($"SELECT * FROM tournamentteams WHERE idtournament = {idTournamnet} AND idteam = '{idTeam}';");
-                bool existsTeamInTournament = existsTeamInTournamentQuery.Count() > 0;
-
-                
-
-                if (!existsTeamInTournament)
+                    idTeam = teamId;
+                    conn.Insert(new TournamentTeam { IdTournament = idTournamnet, IdTeam = teamId });                    
+                } else
                 {
-                    // Add team just into tournamnet
-                    Audit.Information(this, "{0}: Teams.AddToTournament {idTournament} -> {idTeam}", GetUserId(), idTournamnet, idTeam);
+                    var existsTeamInTournamentQuery = conn.Query($"SELECT * FROM tournamentteams WHERE idtournament = {idTournamnet} AND idteam = '{idTeam}';");
+                    bool existsTeamInTournament = existsTeamInTournamentQuery.Count() > 0;
 
-                    conn.Insert(new TournamentTeam { IdTournament = idTournamnet, IdTeam = idTeam });
+                    if (!existsTeamInTournament)
+                    {
+                        // Add team just into tournamnet
+                        Audit.Information(this, "{0}: Teams.AddToTournament {idTournament} -> {idTeam}", GetUserId(), idTournamnet, idTeam);
 
-                    // TODO: Notify team admin (if any) her team has been added to the competition. 
+                        conn.Insert(new TournamentTeam { IdTournament = idTournamnet, IdTeam = idTeam });
 
-                    return true;
+                        // TODO: Notify team admin (if any) her team has been added to the competition. 
+                    }
+                    if (existsTeamInTournament) return new Exception("Error.Team_already_exitsts_in_tournament");
                 }
-                if (existsTeamInTournament) return new Exception("Error.Team_already_exitsts_in_tournament");
 
-                return null;
+                // 🚧🚧🚧 Add players to team
+                foreach (var player in team.Players)
+                {
+                    if (player == null || player.UserData == null || player.TeamData == null) throw new Exception("Malformed request");
+                    Audit.Information(this, "{0}: Players.CreatePlayer {Name} {Surname}", GetUserId(), player.Name, player.Surname);
+
+                    // User email should exists 
+                    bool userExists = PlayersController.CheckUserExistsInGlobalDirectory(Request, player.UserData.Id, player.UserData.Email);
+                    if (!userExists) throw new Exception($"{player.UserData.Email} does not exists in the global directory.");
+
+                    var invite = new InviteInput { IdPlayer = player.Id, IdTeam = idTeam, InviteText = "Hi, we want to invite you to join our team." }; // 🚧 Lang
+
+                    return DbTransaction((c, t) =>
+                    {
+                        Audit.Information(this, "{0}: Players.Invite1: {IdTeam} {IdPlayer}", GetUserId(), invite.IdTeam, invite.IdPlayer);
+
+                        if (!IsOrganizationAdmin() && !IsTeamAdmin(invite.IdTeam, c)) throw new UnauthorizedAccessException();
+
+                        // Validate player is not already on the team. 
+                        var existingPlayer = c.ExecuteScalar<int>("SELECT COUNT(*) FROM teamplayers WHERE idteam = @idTeam AND idplayer = @idPlayer", invite, t);
+                        if (existingPlayer > 0) throw new Exception("Error.PlayerAlreadyInTeam");
+
+                        invite.InviteText = mSanitizer.Sanitize(invite.InviteText);
+
+                        var userOrg = c.QueryFirstOrDefault<User>($"SELECT * FROM users WHERE id = {player.IdUser}");
+                        var notifData = new PlayerNotificationData { };
+
+                        if (userOrg == null)
+                        {
+                            // Insert player
+                            var newPlayer = PlayersController.InsertPlayer(c, t, player, player.IdUser, GetUserId(), false, null, UserEventType.PlayerImported);
+                            invite.IdPlayer = newPlayer.Id;
+
+                            // Importing player that not exists in current org users
+                            notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam, false, player.IdUser);
+                        }
+                        else
+                        {
+                            // Get current org player id becouse import Id can overlap
+                            var playerOrg = c.QueryFirstOrDefault<Player>($"SELECT * FROM players WHERE iduser = {userOrg.Id}");
+                            if(playerOrg == null) throw new Exception("Error.PlayerNotFound"); // Player should exist
+                            invite.IdPlayer = playerOrg.Id;
+
+                            notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam);
+                        }
+
+                        // Create the teamplayers record
+                        var tp = new TeamPlayer
+                        {
+                            IdPlayer = invite.IdPlayer,
+                            IdTeam = invite.IdTeam,
+                            IsTeamAdmin = false,
+                            Status = 1
+                        };
+
+                        c.Insert(tp, t);
+
+                        // UserEvent
+
+                        c.Insert(new UserEvent
+                        {
+                            IdCreator = GetUserId(),
+                            IdUser = notifData.To.Id,
+                            Type = (int)UserEventType.PlayerInvitedToTeam,
+                            TimeStamp = DateTime.Now,
+                            Description = notifData.Team.Name
+                        }, t);
+
+                        notifData.InviteMessage = invite.InviteText;
+
+                        Audit.Information(this, "{0}: Players.Invite2: {1} {2}", GetUserId(), notifData.Team.Name, notifData.To.Name);
+
+                        mNotifications.NotifyEmail(Request, c, t, TemplateKeys.EmailPlayerInviteHtml, notifData);
+
+                        return true;
+                    });
+                }
+
+                return true;
             });
         }
 
@@ -304,7 +387,6 @@ namespace webapi.Controllers
                 return true;
             });
         }
-
 
 
         protected override CrudConfig GetConfig()
@@ -425,6 +507,57 @@ namespace webapi.Controllers
             return result;
         }
 
+        private PlayerNotificationData GetPlayerNotification(IDbConnection c, IDbTransaction t, long idCreator, long idPlayer, long idTeam, bool wantsPin = false, long userId = -1)
+        {
+            var fromUser = UsersController.GetUserForId(c, t, idCreator);
+            var toUser = new User { };
+
+            if (userId == -1) // User should exitst in current org
+            {
+                toUser = c.QueryFirst<User>($"SELECT u.id, u.name, u.mobile FROM users u JOIN players p ON p.idUser = u.id AND p.id = {idPlayer};");
+                var userToGlobal = UsersController.GetUserForId(c, t, toUser.Id);
+                toUser.Email = userToGlobal.Email;
+                toUser.EmailConfirmed = userToGlobal.EmailConfirmed;
+            }
+            else // Global User info
+            {
+                toUser = UsersController.GetUserForId(c, t, userId);
+            }
+
+            var mr = c.QueryMultiple(@"
+                    SELECT id, name, logoImgUrl FROM organizations LIMIT 1;
+                    SELECT id, name, logoImgUrl FROM teams WHERE id = @idTeam;
+                ", new { idFrom = idCreator, idPlayer = idPlayer, idTeam = idTeam });
+
+            // var fromUser = mr.ReadFirst<User>();
+            // var toUser = mr.ReadFirst<User>();
+            var org = mr.ReadFirst<PublicOrganization>();
+            var team = mr.ReadFirst<Team>();
+            if (fromUser == null && idCreator >= 10000000) fromUser = UsersController.GetGlobalAdminForId(idCreator);
+
+            if (team == null) throw new Exception("Error.NotFound.Team");
+            if (toUser == null) throw new Exception("Error.NotFound.ToUser");
+            if (fromUser == null) throw new Exception("Error.NotFound.FromUser");
+
+            var activationLink = toUser.EmailConfirmed && !wantsPin ? "" : PlayersController.GetActivationLink(Request, mAuthTokenManager, toUser);
+            var activationPin = toUser.EmailConfirmed && !wantsPin ? "" : UsersController.GetActivationPin(mAuthTokenManager, toUser);
+
+            return new PlayerNotificationData
+            {
+                To = toUser,
+                From = fromUser,
+                Team = team,
+                Org = org,
+                ActivationLink = activationLink,
+                ActivationPin = activationPin,
+                Images = new PlayerInviteImages
+                {
+                    OrgLogo = Utils.GetUploadUrl(Request, org.LogoImgUrl, org.Id, "org"),
+                    TeamLogo = Utils.GetUploadUrl(Request, team.LogoImgUrl, team.Id, "team")
+                }
+            };
+        }
+
         private static IEnumerable<PlayDay> GroupMatchesInDays(IEnumerable<PlayDay> daysAndMatches)
         {
             // Group matches of the same day in the same record
@@ -455,11 +588,11 @@ namespace webapi.Controllers
             return result;
         }
 
-        public static IEnumerable<Player> GetPlayerStatistics(IDbConnection c, string condition, object parameters)
+        public static IEnumerable<Player> GetPlayerStatistics(IDbConnection c, IDbTransaction t, string condition, object parameters)
         {
             var sql = $@"
                 SELECT 
-	                p.id, p.name, p.surname, p.idphotoimgurl, u.id, u.avatarImgUrl,
+	                p.id, p.iduser, p.name, p.surname, p.idphotoimgurl, u.id, u.avatarImgUrl,
                     tp.apparelNumber, tp.idTacticPosition, tp.fieldPosition,
 	                coalesce(sum(points), 0) as points,
                     coalesce(sum(gamesPlayed), 0) as gamesPlayed, 
@@ -502,13 +635,21 @@ namespace webapi.Controllers
                 parameters,
                 splitOn: "id,apparelNumber,points");
 
+            // Add golbal users props
+            for (int i = 0; i < result.Count(); i++)
+            {
+                var userGlobal = UsersController.GetUserForId(c, t, result.ElementAt(i).UserData.Id);
+
+                result.ElementAt(i).UserData.Email = userGlobal.Email;
+                result.ElementAt(i).UserData.EmailConfirmed = userGlobal.EmailConfirmed;
+            }
+
             return result;
         }
 
-        private static IEnumerable<Player> GetPlayerTotals(IDbConnection c, long idTeam, long idTournament)
+        private static IEnumerable<Player> GetPlayerTotals(IDbConnection c, IDbTransaction t, long idTeam, long idTournament)
         {
-            return GetPlayerStatistics(c, "tp.idTeam = @idTeam ", new { idTournament = idTournament, idTeam = idTeam });
-
+            return GetPlayerStatistics(c, t, "tp.idTeam = @idTeam ", new { idTournament = idTournament, idTeam = idTeam });
         }
 
         public static IEnumerable<Tournament> GetTournamentsForTeam(IDbConnection c, long idTeam)
@@ -523,6 +664,10 @@ namespace webapi.Controllers
                 new { idTeam = idTeam }, 
                 splitOn: "id");
         }
+
+        private NotificationManager mNotifications;
+        private AuthTokenManager mAuthTokenManager;
+        private readonly HtmlSanitizer mSanitizer = new HtmlSanitizer();
     }
 
     public class TeamFile

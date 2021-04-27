@@ -200,20 +200,20 @@ CREATE INDEX playdays_order ON playdays (sequenceOrder);
 
 CREATE TABLE users (
 	id				SERIAL PRIMARY KEY,
-	email			TEXT NOT NULL,
+	email			TEXT,
 	name			TEXT NOT NULL,
-	password		TEXT NOT NULL,
-	salt			TEXT NOT NULL,
+	password		TEXT,
+	salt			TEXT,
 	level			INTEGER NOT NULL,
 	avatarImgUrl	TEXT,
-	emailConfirmed	BOOLEAN NOT NULL,
+	emailConfirmed	BOOLEAN,
 	mobile			TEXT,
 	lang			TEXT,
 	notificationPushToken	TEXT
 );
 
 CREATE INDEX users_id ON users (id);
-CREATE INDEX users_email ON users (email);
+/*CREATE INDEX users_email ON users (email);*/
 
 
 
