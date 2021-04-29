@@ -52,6 +52,7 @@ namespace webapi
             AddUpdater(29, Update29, Undo29);
             AddUpdater(30, Update30, Undo30);
             AddUpdater(31, Update31, Undo31);
+            AddUpdater(32, Update32, Undo32); // 🔎 Not aquired functions
         }
 
         public void Dispose()
@@ -1736,6 +1737,133 @@ namespace webapi
             return 31;
         }
 
+        // 🔎 Unordered updates 
+
+        private int Update32(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"32 -> 33: Not aquired functionalities");
+
+            conn.Execute(@"
+                ALTER TABLE awards ADD COLUMN text1	INTEGER;
+
+                ALTER TABLE matches ADD COLUMN visiblehomescore	INTEGER;
+                ALTER TABLE matches ADD COLUMN visiblevisitorscore	INTEGER;    
+
+                CREATE TABLE matchplayersnotices (
+	                idMatch		INTEGER NOT NULL,
+	                idPlayer	INTEGER NOT NULL,
+	                idTeam		INTEGER NOT NULL,
+	                idUser	    INTEGER NOT NULL,
+                    idDay       INTEGER NOT NULL,
+                    idNotice    INTEGER NOT NULL,
+                    accepted    BOOLEAN NOT NULL,
+                    accepteddate TIMESTAMP
+                );
+                CREATE UNIQUE INDEX matchplayersnotice_idmatch ON matchplayersnotices (idmatch);
+                CREATE UNIQUE INDEX matchplayersnotice_idnotice ON matchplayersnotices (idnotice);
+                CREATE UNIQUE INDEX matchplayersnotice_idplayer ON matchplayersnotices (idplayer);
+                CREATE UNIQUE INDEX matchplayersnotice_idteam ON matchplayersnotices (idteam);
+                CREATE UNIQUE INDEX matchplayersnotices_idday ON matchplayersnotices (idday);
+
+                CREATE TABLE notices (
+                    id	    SERIAL PRIMARY KEY,
+                    name       TEXT NOT NULL,
+                    text                        TEXT,
+                    confirmationtext1           TEXT,
+                    confirmationtext2           TEXT,
+                    confirmationtext3           TEXT,
+                    accepttext                  TEXT,
+                    hoursinadvance  INTEGER NOT NULL,
+                    idtournament    INTEGER NOT NULL,
+                    enabled                 BOOLEAN
+                );
+                CREATE UNIQUE INDEX notices_idtournament ON notices (idtournament);
+
+                ALTER TABLE notifications ADD COLUMN text3 TEXT;
+
+                ALTER TABLE organizations ADD COLUMN sponsordata TEXT;
+                ALTER TABLE organizations ADD COLUMN dpcompanyname TEXT;
+                ALTER TABLE organizations ADD COLUMN dpcompanyid TEXT;
+                ALTER TABLE organizations ADD COLUMN dpcompanyaddress TEXT;
+                ALTER TABLE organizations ADD COLUMN dpcompanyemail TEXT;
+                ALTER TABLE organizations ADD COLUMN dpcompanyphone TEXT;
+                ALTER TABLE organizations ADD COLUMN appearancedata TEXT;
+                ALTER TABLE organizations ADD COLUMN termsversion INTEGER;
+                ALTER TABLE organizations ADD COLUMN paymentgetawaytype TEXT;
+
+                ALTER TABLE playdays ADD COLUMN status INTEGER;
+                ALTER TABLE playdays ADD COLUMN lastupdatetimestamp TIMESTAMP;
+
+                ALTER TABLE playerdayresults ADD COLUMN assistances INTEGER;
+                ALTER TABLE playerdayresults ADD COLUMN mvppoints INTEGER;
+                ALTER TABLE playerdayresults ADD COLUMN penaltypoints INTEGER;
+                ALTER TABLE playerdayresults ADD COLUMN dreamteampoints INTEGER;
+                ALTER TABLE playerdayresults ADD COLUMN penaltyfailed INTEGER;
+                ALTER TABLE playerdayresults ADD COLUMN penaltystopped INTEGER;
+
+                ALTER TABLE teams ADD COLUMN idgoalkeeper INTEGER;
+
+                ALTER TABLE tournaments ADD COLUMN sponsordata TEXT;
+                ALTER TABLE tournaments ADD COLUMN appearancedata TEXT;
+                ALTER TABLE tournaments ADD COLUMN notificationflags TEXT;                
+                ALTER TABLE tournaments ADD COLUMN sequenceorder INTEGER;
+                ALTER TABLE tournaments ADD COLUMN dreamteam TEXT;
+
+                ALTER TABLE tournamentstages ADD COLUMN colorconfig text;  
+            ");
+
+            return 33;
+        }
+
+        private int Undo32(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"33 -> 32: remove not aquired functionalities");
+
+            conn.Execute(@"
+                ALTER TABLE awards DROP COLUMN text1;
+                
+                ALTER TABLE matches DROP COLUMN visiblehomescore;
+                ALTER TABLE matches DROP COLUMN visiblevisitorscore;  
+
+                DROP TABLE matchplayersnotices;
+                
+                DROP TABLE notices;
+
+                ALTER TABLE notifications DROP COLUMN text3;
+
+                ALTER TABLE organizations DROP COLUMN sponsordata;
+                ALTER TABLE organizations DROP COLUMN dpcompanyname;
+                ALTER TABLE organizations DROP COLUMN dpcompanyid;
+                ALTER TABLE organizations DROP COLUMN dpcompanyaddress;
+                ALTER TABLE organizations DROP COLUMN dpcompanyemail;
+                ALTER TABLE organizations DROP COLUMN dpcompanyphone;
+                ALTER TABLE organizations DROP COLUMN appearancedata;
+                ALTER TABLE organizations DROP COLUMN termsversion;
+                ALTER TABLE organizations DROP COLUMN paymentgetawaytype;
+
+                ALTER TABLE playdays DROP COLUMN status;
+                ALTER TABLE playdays DROP COLUMN lastupdatetimestamp;
+                
+                ALTER TABLE playerdayresults DROP COLUMN assistances;
+                ALTER TABLE playerdayresults DROP COLUMN mvppoints;
+                ALTER TABLE playerdayresults DROP COLUMN penaltypoints;
+                ALTER TABLE playerdayresults DROP COLUMN dreamteampoints;
+                ALTER TABLE playerdayresults DROP COLUMN penaltyfailed;
+                ALTER TABLE playerdayresults DROP COLUMN penaltystopped;
+
+                ALTER TABLE teams DROP COLUMN idgoalkeeper;
+                
+                ALTER TABLE tournaments DROP COLUMN sponsordata;
+                ALTER TABLE tournaments DROP COLUMN appearancedata;
+                ALTER TABLE tournaments DROP COLUMN notificationflags;
+                ALTER TABLE tournaments DROP COLUMN sequenceorder;    
+                ALTER TABLE tournaments DROP COLUMN dreamteam;
+                
+                ALTER TABLE tournamentstages DROP COLUMN colorconfig;            
+            ");
+
+            return 32;
+        }
 
 
         // Template
@@ -1861,6 +1989,16 @@ namespace webapi
                 CREATE UNIQUE INDEX globaladmins_id ON globaladmins (id);
                 CREATE UNIQUE INDEX globaladmins_email ON globaladmins (email);
 
+                CREATE TABLE users (
+                    id              SERIAL PRIMARY KEY,
+                    email                       TEXT,
+                    password                    TEXT,
+                    salt                        TEXT,
+                    emailconfirmed              BOOLEAN
+                );
+                CREATE UNIQUE INDEX users_id ON globaladmins (id);
+                CREATE UNIQUE INDEX users_email ON globaladmins (email);
+
                 ALTER SEQUENCE globaladmins_id_seq RESTART WITH 10000000;
             ");
 
@@ -1873,6 +2011,7 @@ namespace webapi
 
             conn.Execute(@"
                 DROP TABLE globalAdmins;
+                DROP TABLE users;
             ");
 
             return 1;

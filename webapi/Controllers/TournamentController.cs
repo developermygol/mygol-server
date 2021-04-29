@@ -520,9 +520,7 @@ namespace webapi.Controllers
 
             return result;
         }
-
-      
-
+              
         private Tournament GetPublicTournamentData(IDbConnection c, long idTournament)
         {
             var result = GetOrgAdminTournamentData(c, idTournament);
@@ -531,7 +529,6 @@ namespace webapi.Controllers
 
             return result;
         }
-
 
         private IEnumerable<TeamDayResult> GetLeagueClassification(IDbConnection c, IDbTransaction t, TournamentStage stage, int daySequenceNumber)
         {
@@ -610,7 +607,6 @@ namespace webapi.Controllers
             ", new { idTournament = idTournament }, t);
         }
         
-
         protected override bool IsAuthorized(RequestType reqType, Tournament target, IDbConnection c)
         {
             return AuthByRequestType(list: UserLevel.All, add: UserLevel.OrgAdmin, edit: UserLevel.OrgAdmin, delete: UserLevel.OrgAdmin);

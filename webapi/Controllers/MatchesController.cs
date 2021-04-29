@@ -96,6 +96,8 @@ namespace webapi.Controllers
                     NotifyMatchPlayers(c, t, value, title, message);
                 }
 
+                AfterEdit(value, c, t);
+
                 return true;
             });
         }
@@ -447,8 +449,7 @@ namespace webapi.Controllers
             return DbOperation(c =>
             {
                 return GetPlayerTeamAccpetedNotices(c, idPlayer, idTeam, idTournament);
-            });
-                
+            });                
         }
 
         [HttpGet("playermatchnotices/{idPlayer}/{idTeam}/{idMatch}/{idTournament}")]
@@ -458,7 +459,6 @@ namespace webapi.Controllers
             {
                 return GetPlayerMatchNotices(c, idPlayer, idTeam, idMatch, idTournament);
             });
-
         }
 
         // __ Write actions ___________________________________________________
@@ -885,10 +885,17 @@ namespace webapi.Controllers
                     });
                 }
                                 
-                GenerateMatchPlayersNoitces(c, value);
+                
             }
 
             return base.AfterNew(value, c, t);
+        }
+
+        protected override object AfterEdit(Match value, IDbConnection c, IDbTransaction t)
+        {
+            GenerateMatchPlayersNoitces(c, value);
+
+            return base.AfterEdit(value, c, t);
         }
 
         protected override object AfterDelete(Match value, IDbConnection c, IDbTransaction t)
@@ -954,8 +961,13 @@ namespace webapi.Controllers
                             var anyAcceptedNotice = c.Query($"Select matchplayersnotices WHERE idplayer = {player.Id} AND idteam = {match.IdHomeTeam} AND idnotice = {notice.Id} AND accepted = true;");
                             if (anyAcceptedNotice.Count() > 0) acceptedNotice = true;
                         }
-
-                        c.Execute($"INSERT INTO matchplayersnotices(idmatch, idplayer, idteam, idUser, idday, accepted, idnotice) VALUES({match.Id}, {player.Id}, {match.IdHomeTeam}, {player.UserData.Id}, {match.IdDay}, {acceptedNotice}, {notice.Id})");
+                                                
+                        var existingNotice = c.QueryFirstOrDefault<MatchPlayerNotice>($"Select * FROM matchplayersnotices WHERE idmatch = {match.Id} AND idplayer = {player.Id} AND idteam = {match.IdHomeTeam} AND idUser = {player.UserData.Id} AND idday = {match.IdDay} AND idnotice = {notice.Id}");
+                        // When Match is updated if notices where not created before they will create them too                        
+                        if(existingNotice == null) 
+                        {
+                            c.Execute($"INSERT INTO matchplayersnotices(idmatch, idplayer, idteam, idUser, idday, accepted, idnotice) VALUES({match.Id}, {player.Id}, {match.IdHomeTeam}, {player.UserData.Id}, {match.IdDay}, {acceptedNotice}, {notice.Id})");
+                        }
                     }
 
                     foreach (Player player in match.VisitorPlayers)
@@ -965,7 +977,13 @@ namespace webapi.Controllers
                             var anyAcceptedNotice = c.Query($"Select matchplayersnotices WHERE idplayer = {player.Id} AND idteam = {match.IdVisitorTeam} AND idnotice = {notice.Id} AND accepted = true;");
                             if (anyAcceptedNotice.Count() > 0) acceptedNotice = true;
                         }
-                        c.Execute($"INSERT INTO matchplayersnotices(idmatch, idplayer, idteam, idUser, idday, accepted, idnotice) VALUES({match.Id}, {player.Id}, {match.IdVisitorTeam}, {player.UserData.Id}, {match.IdDay}, false, {notice.Id})");
+
+                        var existingNotice = c.QueryFirstOrDefault<MatchPlayerNotice>($"Select * FROM matchplayersnotices WHERE idmatch = {match.Id} AND idplayer = {player.Id} AND idteam = {match.IdHomeTeam} AND idUser = {player.UserData.Id} AND idday = {match.IdDay} AND idnotice = {notice.Id}");
+                        // When Match is updated if notices where not created before they will create them too                        
+                        if (existingNotice == null)
+                        {
+                            c.Execute($"INSERT INTO matchplayersnotices(idmatch, idplayer, idteam, idUser, idday, accepted, idnotice) VALUES({match.Id}, {player.Id}, {match.IdVisitorTeam}, {player.UserData.Id}, {match.IdDay}, false, {notice.Id})");
+                        }
                     }
                 }
             }

@@ -37,7 +37,7 @@ namespace webapi.Controllers
 
                 Audit.Information(this, "Users.Login1: {Email}", loginInfo.Email);
 
-                var user = ValidateUser(c, null, loginInfo);
+                var user = ValidateUser(c, loginInfo);
                 if (user == null) throw new LoginException(loginInfo.Email);
 
                 LoginResult result = GetLoginResultForUser(c, null, user);
@@ -59,7 +59,7 @@ namespace webapi.Controllers
 
                 Audit.Information(this, "Users.LoginWithPin1 {0}", loginInfo.Email);
 
-                var dbUser = GetUserForEmail(c, t, loginInfo.Email);
+                var dbUser = GetUserForEmail(c, loginInfo.Email);
                 if (dbUser.Password != null && dbUser.Password != "") throw new Exception("Error.NeedPin");
 
                 if (!ValidatePin(c, dbUser, loginInfo.EnrollPin)) throw new LoginException(loginInfo.Email);
@@ -98,15 +98,29 @@ namespace webapi.Controllers
             {
                 if (string.IsNullOrWhiteSpace(email)) throw new NoDataException();
 
-                var nd = GetPasswordResetNotifData(c, t, email);
+                var nd = GetPasswordResetNotifData(c, email);
                 if (nd.To == null) throw new Exception("Error.Email.NotFound");
 
-                var updated = c.Execute("UPDATE users SET emailConfirmed = 'f' WHERE id = @idUser", new { idUser = nd.To.Id }, t);
-                if (updated != 1) throw new Exception("Error.Email.CouldNotUpdate");
+                //var updated = c.Execute("UPDATE users SET emailConfirmed = 'f' WHERE id = @idUser", new { idUser = nd.To.Id }, t);
+                using (var dc = GetGlobalDirectoryConn())
+                {
+                    var dt = dc.BeginTransaction();
 
-                mNotifier.NotifyEmail(Request, c, t, TemplateKeys.PlayerResetPassword, nd);
+                    try
+                    {
+                        var updated = dc.Execute("UPDATE users SET emailConfirmed = 'f' WHERE id = @idUser", new { idUser = nd.To.Id }, dt);
 
-                return true;
+                        if (updated != 1) throw new Exception("Error.Email.CouldNotUpdate");
+
+                        mNotifier.NotifyEmail(Request, c, t, TemplateKeys.PlayerResetPassword, nd);
+
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        throw new Exception("Error");
+                    }
+                }
             });
         }
 
@@ -121,7 +135,7 @@ namespace webapi.Controllers
 
                 // Verify the email from the activation token
 
-                var dbUser = GetUserFromActivationToken(c, t, activationToken);
+                var dbUser = GetUserFromActivationToken(c, activationToken);
                 if (dbUser.EmailConfirmed) throw new AlreadyActivatedException(dbUser.Email);
 
                 var user = player.UserData;
@@ -130,6 +144,24 @@ namespace webapi.Controllers
 
                 UpdatePassword(dbUser, user.Password);
                 dbUser.EmailConfirmed = true;
+
+                using (var globalConn = GetGlobalDirectoryConn())
+                {
+                    try
+                    {
+                        globalConn.Insert(new UserGlobal
+                        {
+                            Email = dbUser.Email,
+                            Password = dbUser.Password,
+                            Salt = dbUser.Salt,
+                            EmailConfirmed = dbUser.EmailConfirmed
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                }
 
                 if (!c.Update(dbUser, t)) throw new EmailException("Error.EmailNotFound", dbUser.Email);
 
@@ -172,6 +204,8 @@ namespace webapi.Controllers
                         Action = (int)BasicLoginResultType.PasswordRequired
                     };
 
+                    var userFromglobal = GetGlobalUserForEmail(login.Email);
+
                     var users = c.Query<User>(@"SELECT * FROM users WHERE email iLIKE @email;", new { email = login.Email });
                     var count = users.Count();
                     if (count == 0) return result;  // Not found, but we are not telling.
@@ -179,6 +213,12 @@ namespace webapi.Controllers
 
                     var user = users.First();
                     result.IdUser = user.Id;
+
+                    // This columns should not be in org>users anymore they should be in global>users
+                    user.Email = userFromglobal.Email;
+                    user.Password = userFromglobal.Password;
+                    user.Salt = userFromglobal.Salt;
+                    user.EmailConfirmed = userFromglobal.EmailConfirmed;
 
                     if (user.Password == null || user.Password == "")
                         result.Action = (int)BasicLoginResultType.NoPasswordSet;
@@ -198,16 +238,21 @@ namespace webapi.Controllers
         // __ Impl ____________________________________________________________
 
 
-        private PlayerNotificationData GetPasswordResetNotifData(IDbConnection c, IDbTransaction t, string email)
+        private PlayerNotificationData GetPasswordResetNotifData(IDbConnection c, string email)
         {
-            var mr = c.QueryMultiple(@"
+            var user = GetUserForEmail(c, email);
+
+            /*var mr = c.QueryMultiple(@"
                     SELECT u.id, u.name, u.email, u.mobile, u.emailConfirmed FROM users u WHERE email ilike @email;
                     SELECT id, name, logoImgUrl FROM organizations LIMIT 1;
-                ", new { email = email });
+                ", new { email = email });*/
+            var mr = c.QueryFirst<PublicOrganization>(@"SELECT id, name, logoImgUrl FROM organizations LIMIT 1;");
 
-            var toUser = mr.ReadFirst<User>();
+            var toUser = user;
+            //var toUser = mr.ReadFirst<User>();
             var fromUser = toUser;
-            var org = mr.ReadFirst<PublicOrganization>();
+            //var org = mr.ReadFirst<PublicOrganization>();
+            var org = mr;
 
             var activationLink = PlayersController.GetActivationLink(Request, mTokenManager, toUser);
 
@@ -271,15 +316,16 @@ namespace webapi.Controllers
             HashPasswordInUser(target);
         }
 
-        private User GetUserFromActivationToken(IDbConnection c, IDbTransaction t, string activationToken)
+        private User GetUserFromActivationToken(IDbConnection c, string activationToken)
         {
             var email = GetEmailFromActivationToken(activationToken);
             if (email == null) throw new EmailException("Error.EmailNotFound", "<no email in activation token>");
 
-            var users = c.Query<User>("SELECT * FROM users WHERE email iLIKE @email", new { email = email }, t);
+            /*var users = c.Query<User>("SELECT * FROM users WHERE email iLIKE @email", new { email = email }, t);
             if (users.Count() > 1) throw new Exception("Error.DuplicateEmail");
 
-            var user = users.FirstOrDefault();
+            var user = users.FirstOrDefault();*/
+            var user = GetUserForEmail(c, email);
             if (user == null) throw new EmailException("Error.EmailNotFound", email);
 
             return user;
@@ -291,9 +337,31 @@ namespace webapi.Controllers
             return claims.Where(claim => claim.Type == "email").FirstOrDefault()?.Value;
         }
 
-        public static User GetUserForEmail(IDbConnection c, IDbTransaction t, string email)
+        public static User GetUserForEmail(IDbConnection c, string email)
         {
-            // Get from the database 
+            // Get from the database now from global>users
+            var userGlobal = GetGlobalUserForEmail(email);
+            if(userGlobal == null)
+            {
+                // Try global admin
+                return GetGlobalAdminForEmail(email);
+            }
+
+            var user = c.QueryFirstOrDefault<User>("SELECT * FROM users WHERE id = @id", new { id = userGlobal.Id });
+            // No Org user swap to userGlobal values
+            if (user == null)
+            {
+                user = userGlobal;
+            }
+
+            // This columns should not be in org>users anymore they should be in global>users
+            user.Email = userGlobal.Email;
+            user.Password = userGlobal.Password;
+            user.Salt = userGlobal.Salt;
+            user.EmailConfirmed = userGlobal.EmailConfirmed;
+
+            return user;
+            /* 🔎 INITIAL
             var users = c.Query<User>("SELECT * FROM users WHERE email iLIKE @email", new { email = email }, t);
             if (users.Count() != 1)
             {
@@ -302,6 +370,40 @@ namespace webapi.Controllers
             }
 
             return users.First();
+            */
+        }
+
+        public static User GetUserForId(IDbConnection c, long userId)
+        {
+            string email = GetGlobalEmailForId(c, userId);
+            return GetUserForEmail(c, email);
+        }
+
+        public static User GetGlobalUserForEmail(string email)
+        {
+            using (var c = GetGlobalDirectoryConn())
+            {
+                var users = c.Query<User>("SELECT * FROM users u WHERE email ilike @email", new { email = email });
+                if (users.Count() != 1) return null;
+
+                var user = users.First();
+                var userOrgGlobal = c.QueryFirstOrDefault<User>($"SELECT iduser AS id FROM userorganization WHERE email ilike '{email}'");
+                
+                if(userOrgGlobal != null) user.Id = userOrgGlobal.Id; // 💥🔎 NO well enteres users
+
+                return users.First();
+            }
+        }
+
+        public static string GetGlobalEmailForId(IDbConnection c, long userId)
+        {
+            using (var dc = GetGlobalDirectoryConn())
+            {
+                string email = dc.QueryFirstOrDefault<String>("SELECT email FROM userorganization WHERE iduser = @userId", new { userId = userId });
+                // 💥 This should not be necessary in the future just using it for global admins
+                if(email == null) email = c.QueryFirstOrDefault<String>("SELECT email FROM users WHERE id = @userId", new { userId = userId });
+                return email;
+            }
         }
 
         public static User GetGlobalAdminForEmail(string email)
@@ -344,9 +446,9 @@ namespace webapi.Controllers
             return pin;
         }
 
-        private User ValidateUser(IDbConnection c, IDbTransaction t, InputLoginInfo loginInfo)
+        private User ValidateUser(IDbConnection c, InputLoginInfo loginInfo)
         {
-            var user = GetUserForEmail(c, t, loginInfo.Email);
+            var user = GetUserForEmail(c, loginInfo.Email);
             if (user == null) return null;
 
             // the email matches, now check password
@@ -430,13 +532,40 @@ namespace webapi.Controllers
 
         public static bool EmailExists(IDbConnection c, IDbTransaction t, string email)
         {
-            var emailCount = c.ExecuteScalar<int>("SELECT COUNT(id) FROM USERS WHERE email ILIKE @email", new { email }, t);
-            return emailCount > 0;
+            using (var cd = GetGlobalDirectoryConn())
+            {
+                var emailCount = cd.ExecuteScalar<int>("SELECT COUNT(id) FROM USERS WHERE email ILIKE @email", new { email }, t);
+                return emailCount > 0;
+            }
+            /*var emailCount = c.ExecuteScalar<int>("SELECT COUNT(id) FROM USERS WHERE email ILIKE @email", new { email }, t);
+            return emailCount > 0;*/
         }
 
         protected override object AfterNew(User value, IDbConnection conn, IDbTransaction t)
         {
             var token = mTokenManager.CreateToken(new[] { new Claim("id", value.Id.ToString()), new Claim("email", value.Email) });
+
+            // 🚧 Add to globalOrg userorganitzation and users
+
+            using (var dc = GetGlobalDirectoryConn())
+            {
+                var dt = dc.BeginTransaction();
+
+                try
+                {
+                    // 💥 var orgName = OrganizationManager.GetConfigForRequest(request).Name;
+
+                    dc.Insert(new GlobalUserOrganization { IdUser = value.Id, Email = value.Email, OrganizationName = "" }, dt);
+                    dc.Insert(new UserGlobal { Email = value.Email, Password = value.Password, Salt = value.Salt, EmailConfirmed = value.EmailConfirmed }, dt);
+                    
+                    dt.Commit();
+                }
+                catch (Exception ex)
+                {                 
+                    dt.Rollback();
+                    throw ex;
+                }
+            }
 
             // TODO: Notify, but only if not a player because it already has its notification. 
             // More and more I think I should unify the users and players tables. It's one hell of a refactor...
@@ -447,6 +576,52 @@ namespace webapi.Controllers
             //mNotifier.SendCannedNotification(
             //    conn, null, "NewUser", GetUserId(), value.Id, 
             //    value.Name, token);
+
+            return value.Id;
+        }
+
+        protected override object AfterEdit(User value, IDbConnection conn, IDbTransaction t)
+        {
+            // 🚧 Update to globalOrg userorganitzation and users
+            using (var dc = GetGlobalDirectoryConn())
+            {
+                var dt = dc.BeginTransaction();
+
+                try
+                {
+                    dc.Execute($"UPDATE userorganization SET email = '{value.Email}' WHERE iduser = {value.Id};");
+                    dc.Execute($"UPDATE users SET email = '{value.Email}', password = '{value.Password}', salt = '{value.Salt}', emailconfirmed = {value.EmailConfirmed} WHERE email = '{value.Email}';");
+                    dt.Commit();
+                }
+                catch (Exception ex)
+                {
+                    dt.Rollback();
+                    throw ex;
+                }
+            }
+
+            return value.Id;
+        }
+
+        protected override object AfterDelete(User value, IDbConnection conn, IDbTransaction t)
+        {
+            // 🚧 Delete to globalOrg userorganitzation and users
+            using (var dc = GetGlobalDirectoryConn())
+            {
+                var dt = dc.BeginTransaction();
+
+                try
+                {
+                    dc.Execute($"DELETE FROM userorganization WHERE iduser = {value.Id} AND email = '{value.Email}';");
+                    dc.Execute($"DELETE FROM users WHERE email = '{value.Email}';");
+                    dt.Commit();
+                }
+                catch (Exception ex)
+                {
+                    dt.Rollback();
+                    throw ex;
+                }
+            }
 
             return value.Id;
         }
