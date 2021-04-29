@@ -319,7 +319,7 @@ namespace webapi.Controllers
                             invite.IdPlayer = newPlayer.Id;
 
                             // Importing player that not exists in current org users
-                            notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam, false, player.IdUser);
+                            notifData = GetPlayerNotification(c, GetUserId(), invite.IdPlayer, invite.IdTeam, false, player.IdUser);
                         }
                         else
                         {
@@ -328,7 +328,7 @@ namespace webapi.Controllers
                             if(playerOrg == null) throw new Exception("Error.PlayerNotFound"); // Player should exist
                             invite.IdPlayer = playerOrg.Id;
 
-                            notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam);
+                            notifData = GetPlayerNotification(c, GetUserId(), invite.IdPlayer, invite.IdTeam);
                         }
 
                         // Create the teamplayers record
@@ -507,21 +507,21 @@ namespace webapi.Controllers
             return result;
         }
 
-        private PlayerNotificationData GetPlayerNotification(IDbConnection c, IDbTransaction t, long idCreator, long idPlayer, long idTeam, bool wantsPin = false, long userId = -1)
+        private PlayerNotificationData GetPlayerNotification(IDbConnection c, long idCreator, long idPlayer, long idTeam, bool wantsPin = false, long userId = -1)
         {
-            var fromUser = UsersController.GetUserForId(c, t, idCreator);
+            var fromUser = UsersController.GetUserForId(c, idCreator);
             var toUser = new User { };
 
             if (userId == -1) // User should exitst in current org
             {
                 toUser = c.QueryFirst<User>($"SELECT u.id, u.name, u.mobile FROM users u JOIN players p ON p.idUser = u.id AND p.id = {idPlayer};");
-                var userToGlobal = UsersController.GetUserForId(c, t, toUser.Id);
+                var userToGlobal = UsersController.GetUserForId(c, toUser.Id);
                 toUser.Email = userToGlobal.Email;
                 toUser.EmailConfirmed = userToGlobal.EmailConfirmed;
             }
             else // Global User info
             {
-                toUser = UsersController.GetUserForId(c, t, userId);
+                toUser = UsersController.GetUserForId(c, userId);
             }
 
             var mr = c.QueryMultiple(@"
@@ -588,7 +588,7 @@ namespace webapi.Controllers
             return result;
         }
 
-        public static IEnumerable<Player> GetPlayerStatistics(IDbConnection c, IDbTransaction t, string condition, object parameters)
+        public static IEnumerable<Player> GetPlayerStatistics(IDbConnection c, string condition, object parameters)
         {
             var sql = $@"
                 SELECT 
@@ -638,7 +638,7 @@ namespace webapi.Controllers
             // Add golbal users props
             for (int i = 0; i < result.Count(); i++)
             {
-                var userGlobal = UsersController.GetUserForId(c, t, result.ElementAt(i).UserData.Id);
+                var userGlobal = UsersController.GetUserForId(c, result.ElementAt(i).UserData.Id);
 
                 result.ElementAt(i).UserData.Email = userGlobal.Email;
                 result.ElementAt(i).UserData.EmailConfirmed = userGlobal.EmailConfirmed;
@@ -649,7 +649,7 @@ namespace webapi.Controllers
 
         private static IEnumerable<Player> GetPlayerTotals(IDbConnection c, IDbTransaction t, long idTeam, long idTournament)
         {
-            return GetPlayerStatistics(c, t, "tp.idTeam = @idTeam ", new { idTournament = idTournament, idTeam = idTeam });
+            return GetPlayerStatistics(c, "tp.idTeam = @idTeam ", new { idTournament = idTournament, idTeam = idTeam });
         }
 
         public static IEnumerable<Tournament> GetTournamentsForTeam(IDbConnection c, long idTeam)

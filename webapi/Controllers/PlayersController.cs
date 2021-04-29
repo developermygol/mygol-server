@@ -86,7 +86,7 @@ namespace webapi.Controllers
 
                var newPlayer = InsertPlayer(c, t, player, newUserGlobalId, idCreator, isOrgAdmin);
 
-               var notifData = GetPlayerNotification(c, t, idCreator, newPlayer.Id, player.TeamData.IdTeam);
+               var notifData = GetPlayerNotification(c, idCreator, newPlayer.Id, player.TeamData.IdTeam);
                mNotifications.NotifyEmail(Request, c, t, TemplateKeys.EmailPlayerInviteHtml, notifData);
 
                return newPlayer;
@@ -143,7 +143,7 @@ namespace webapi.Controllers
                     invite.IdPlayer = newPlayer.Id;
 
                     // Importing player that not exists in current org users
-                    notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam, false, player.IdUser);
+                    notifData = GetPlayerNotification(c, GetUserId(), invite.IdPlayer, invite.IdTeam, false, player.IdUser);
                 }
                 else
                 {
@@ -152,7 +152,7 @@ namespace webapi.Controllers
                     if (playerOrg == null) throw new Exception("Error.PlayerNotFound"); // Player should exist
                     invite.IdPlayer = playerOrg.Id;
 
-                    notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam);
+                    notifData = GetPlayerNotification(c, GetUserId(), invite.IdPlayer, invite.IdTeam);
                 }
 
                 // Create the teamplayers record
@@ -226,7 +226,6 @@ namespace webapi.Controllers
 
             return GeneratePlayersFilePDF(data, players, team, tournament, org);
         }
-
 
         [HttpGet("forteam/{idTeam}")]
         public IActionResult PlayersForTeam(long idTeam)
@@ -314,7 +313,7 @@ namespace webapi.Controllers
 
             if(player == null) throw new Exception("Error.PlayerNoUser");
 
-            var userData = UsersController.GetUserForId(c, t, player.IdUser);
+            var userData = UsersController.GetUserForId(c, player.IdUser);
             player.UserData = userData;
 
             /*var query = idUser > -1 ?
@@ -421,7 +420,7 @@ namespace webapi.Controllers
             {
                 // TODO: This query can be optimized, we only need to sum the playresults days, not all the joins happening here. 
                 var parameters = new { idPlayer = player.Id, idTournament = idTournament, idTeam = idTeam };
-                var playerSummary = TeamsController.GetPlayerStatistics(c, t, "pdr.idPlayer = @idPlayer AND pdr.idTournament = @idTournament AND pdr.idTeam = @idTeam ", parameters).FirstOrDefault();
+                var playerSummary = TeamsController.GetPlayerStatistics(c, "pdr.idPlayer = @idPlayer AND pdr.idTournament = @idTournament AND pdr.idTeam = @idTeam ", parameters).FirstOrDefault();
                 if (playerSummary != null) player.DayResultSummary = playerSummary.DayResultSummary;
 
                 player.DayResults = c.Query<PlayerDayResult, PlayDay, PlayDay>(
@@ -451,7 +450,6 @@ namespace webapi.Controllers
             });
         }
 
-
         [HttpGet("ficha/{idTournament}/{idTeam}")]
         public IActionResult GetFichaData(long idTournament, long idTeam)
         {
@@ -464,6 +462,26 @@ namespace webapi.Controllers
             
         }
 
+        [HttpGet("fortournament/withfield/{idTournament}")]
+        public IActionResult GetPlayersInTournamentWithField(long idTournament)
+        {
+            // Query used on dreamteams to get not ranked players to.
+            return DbOperation(c =>
+            {
+                if (!IsLoggedIn()) throw new UnauthorizedAccessException();
+
+                var players = c.Query<DreamTeamRanking>(@"
+                    SELECT tp.idPlayer, tt.idTeam, tp.fieldPosition, tm.name AS teamName, p.name, p.surname, p.idPhotoImgUrl, u.avatarImgUrl 
+                    FROM tournamentteams tt 
+                    INNER JOIN teamplayers tp ON tp.idteam = tt.idteam 
+                    INNER JOIN teams tm ON tm.id = tt.idteam 
+                    INNER JOIN players p ON p.id = tp.idplayer 
+                    INNER JOIN users u ON u.id = p.iduser 
+                    WHERE tt.idtournament = @idTournament
+                    AND tp.fieldPosition != 0 ", new { idTournament = idTournament });
+                return players;
+            });
+        }
 
         [HttpPut]
         public IActionResult Update([FromBody] Player player)
@@ -679,8 +697,8 @@ namespace webapi.Controllers
                 // Delete the possible paymentconfigs associated to this idteam - idplayer combo.
                 var numDeleted = c.Execute("DELETE FROM paymentconfigs WHERE idTeam = @idTeam AND idUser = @idUser", new { idTeam = idTeam, idUser = dbPlayer.IdUser }, t);
 
-                var userFrom = UsersController.GetUserForId(c, t, currentUserId);
-                var userTo = UsersController.GetUserForId(c, t, dbPlayer.IdUser);
+                var userFrom = UsersController.GetUserForId(c, currentUserId);
+                var userTo = UsersController.GetUserForId(c, dbPlayer.IdUser);
                 var team = c.QueryFirst<Team>($"SELECT id, name FROM teams WHERE id = {idTeam};");
 
                 /*var mr = c.QueryMultiple(@"
@@ -725,7 +743,7 @@ namespace webapi.Controllers
 
                 invite.InviteText = mSanitizer.Sanitize(invite.InviteText);
 
-                var notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam);
+                var notifData = GetPlayerNotification(c, GetUserId(), invite.IdPlayer, invite.IdTeam);
 
                 // Create the teamplayers record
                 var tp = new TeamPlayer
@@ -766,7 +784,7 @@ namespace webapi.Controllers
             {
                 invite.InviteText = mSanitizer.Sanitize(invite.InviteText);
 
-                var notifData = GetPlayerNotification(c, t, GetUserId(), invite.IdPlayer, invite.IdTeam, true);
+                var notifData = GetPlayerNotification(c, GetUserId(), invite.IdPlayer, invite.IdTeam, true);
                 notifData.InviteMessage = invite.InviteText;
 
                 Audit.Information(this, "{0}: Players.ResendInvite: {1} {2} {3}", GetUserId(), notifData.Team.Name, notifData.To.Name, notifData.To.Email);
@@ -905,21 +923,21 @@ namespace webapi.Controllers
             return newPlayer;
         }
 
-        private PlayerNotificationData GetPlayerNotification(IDbConnection c, IDbTransaction t, long idCreator, long idPlayer, long idTeam, bool wantsPin = false, long userId = -1)
+        private PlayerNotificationData GetPlayerNotification(IDbConnection c, long idCreator, long idPlayer, long idTeam, bool wantsPin = false, long userId = -1)
         {
-            var fromUser = UsersController.GetUserForId(c, t, idCreator);
+            var fromUser = UsersController.GetUserForId(c, idCreator);
             var toUser = new User { };
 
             if (userId == -1) // User should exitst in current org
             {
                 toUser = c.QueryFirst<User>($"SELECT u.id, u.name, u.mobile FROM users u JOIN players p ON p.idUser = u.id AND p.id = {idPlayer};");
-                var userToGlobal = UsersController.GetUserForId(c, t, toUser.Id);
+                var userToGlobal = UsersController.GetUserForId(c, toUser.Id);
                 toUser.Email = userToGlobal.Email;
                 toUser.EmailConfirmed = userToGlobal.EmailConfirmed;
             }
             else // Global User info
             {
-                toUser = UsersController.GetUserForId(c, t, userId);
+                toUser = UsersController.GetUserForId(c, userId);
             }
 
             // 🔎 Org user could not exitst
@@ -1012,8 +1030,12 @@ namespace webapi.Controllers
         {
             // Returns full player data. 
             // Already not selecting here password, salt and other sensitive user fields.
-            return c.Query<Player, User, TeamPlayer, Player>(
-                $"SELECT p.*, u.email, u.mobile, u.avatarimgurl, t.* FROM players p LEFT JOIN users u ON p.iduser = u.id LEFT JOIN teamplayers t ON t.idplayer = p.id WHERE {condition}",
+
+            
+
+            var players =  c.Query<Player, User, TeamPlayer, Player>(
+                // $"SELECT p.*, u.email, u.mobile, u.avatarimgurl, t.* FROM players p LEFT JOIN users u ON p.iduser = u.id LEFT JOIN teamplayers t ON t.idplayer = p.id WHERE {condition}",
+                $"SELECT p.*, u.id,  u.mobile, u.avatarimgurl, t.* FROM players p LEFT JOIN users u ON p.iduser = u.id LEFT JOIN teamplayers t ON t.idplayer = p.id WHERE {condition}",
                 (player, user, teamPlayer) =>
                 {
                     player.UserData = user;
@@ -1021,7 +1043,23 @@ namespace webapi.Controllers
                     return player;
                 },
                 parameters,
-                splitOn: "email, idteam");
+                //splitOn: "email, idteam");
+                splitOn: "id, idteam");
+
+            // 🔎 email currently only exists in global users
+
+            foreach (var player in players)
+            {
+                var user = UsersController.GetUserForId(c, player.UserData.Id);
+
+                if(user != null)
+                {
+                    player.UserData.Email = user.Email;
+                    player.UserData.EmailConfirmed = user.EmailConfirmed;
+                }
+            }
+
+            return players;
         }
 
         private FileContentResult GeneratePlayersFilePDF(PlayersFilesRequest data, IEnumerable<Player> players, Team team, Tournament tournament, PublicOrganization org)

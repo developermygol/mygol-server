@@ -37,7 +37,7 @@ namespace webapi.Controllers
 
                 Audit.Information(this, "Users.Login1: {Email}", loginInfo.Email);
 
-                var user = ValidateUser(c, null, loginInfo);
+                var user = ValidateUser(c, loginInfo);
                 if (user == null) throw new LoginException(loginInfo.Email);
 
                 LoginResult result = GetLoginResultForUser(c, null, user);
@@ -59,7 +59,7 @@ namespace webapi.Controllers
 
                 Audit.Information(this, "Users.LoginWithPin1 {0}", loginInfo.Email);
 
-                var dbUser = GetUserForEmail(c, t, loginInfo.Email);
+                var dbUser = GetUserForEmail(c, loginInfo.Email);
                 if (dbUser.Password != null && dbUser.Password != "") throw new Exception("Error.NeedPin");
 
                 if (!ValidatePin(c, dbUser, loginInfo.EnrollPin)) throw new LoginException(loginInfo.Email);
@@ -98,7 +98,7 @@ namespace webapi.Controllers
             {
                 if (string.IsNullOrWhiteSpace(email)) throw new NoDataException();
 
-                var nd = GetPasswordResetNotifData(c, t, email);
+                var nd = GetPasswordResetNotifData(c, email);
                 if (nd.To == null) throw new Exception("Error.Email.NotFound");
 
                 //var updated = c.Execute("UPDATE users SET emailConfirmed = 'f' WHERE id = @idUser", new { idUser = nd.To.Id }, t);
@@ -135,7 +135,7 @@ namespace webapi.Controllers
 
                 // Verify the email from the activation token
 
-                var dbUser = GetUserFromActivationToken(c, t, activationToken);
+                var dbUser = GetUserFromActivationToken(c, activationToken);
                 if (dbUser.EmailConfirmed) throw new AlreadyActivatedException(dbUser.Email);
 
                 var user = player.UserData;
@@ -238,9 +238,9 @@ namespace webapi.Controllers
         // __ Impl ____________________________________________________________
 
 
-        private PlayerNotificationData GetPasswordResetNotifData(IDbConnection c, IDbTransaction t, string email)
+        private PlayerNotificationData GetPasswordResetNotifData(IDbConnection c, string email)
         {
-            var user = GetUserForEmail(c, t, email);
+            var user = GetUserForEmail(c, email);
 
             /*var mr = c.QueryMultiple(@"
                     SELECT u.id, u.name, u.email, u.mobile, u.emailConfirmed FROM users u WHERE email ilike @email;
@@ -316,7 +316,7 @@ namespace webapi.Controllers
             HashPasswordInUser(target);
         }
 
-        private User GetUserFromActivationToken(IDbConnection c, IDbTransaction t, string activationToken)
+        private User GetUserFromActivationToken(IDbConnection c, string activationToken)
         {
             var email = GetEmailFromActivationToken(activationToken);
             if (email == null) throw new EmailException("Error.EmailNotFound", "<no email in activation token>");
@@ -325,7 +325,7 @@ namespace webapi.Controllers
             if (users.Count() > 1) throw new Exception("Error.DuplicateEmail");
 
             var user = users.FirstOrDefault();*/
-            var user = GetUserForEmail(c, t, email);
+            var user = GetUserForEmail(c, email);
             if (user == null) throw new EmailException("Error.EmailNotFound", email);
 
             return user;
@@ -337,7 +337,7 @@ namespace webapi.Controllers
             return claims.Where(claim => claim.Type == "email").FirstOrDefault()?.Value;
         }
 
-        public static User GetUserForEmail(IDbConnection c, IDbTransaction t, string email)
+        public static User GetUserForEmail(IDbConnection c, string email)
         {
             // Get from the database now from global>users
             var userGlobal = GetGlobalUserForEmail(email);
@@ -347,7 +347,7 @@ namespace webapi.Controllers
                 return GetGlobalAdminForEmail(email);
             }
 
-            var user = c.QueryFirstOrDefault<User>("SELECT * FROM users WHERE id = @id", new { id = userGlobal.Id }, t);
+            var user = c.QueryFirstOrDefault<User>("SELECT * FROM users WHERE id = @id", new { id = userGlobal.Id });
             // No Org user swap to userGlobal values
             if (user == null)
             {
@@ -373,10 +373,10 @@ namespace webapi.Controllers
             */
         }
 
-        public static User GetUserForId(IDbConnection c, IDbTransaction t, long userId)
+        public static User GetUserForId(IDbConnection c, long userId)
         {
             string email = GetGlobalEmailForId(c, userId);
-            return GetUserForEmail(c, t, email);
+            return GetUserForEmail(c, email);
         }
 
         public static User GetGlobalUserForEmail(string email)
@@ -446,9 +446,9 @@ namespace webapi.Controllers
             return pin;
         }
 
-        private User ValidateUser(IDbConnection c, IDbTransaction t, InputLoginInfo loginInfo)
+        private User ValidateUser(IDbConnection c, InputLoginInfo loginInfo)
         {
-            var user = GetUserForEmail(c, t, loginInfo.Email);
+            var user = GetUserForEmail(c, loginInfo.Email);
             if (user == null) return null;
 
             // the email matches, now check password
