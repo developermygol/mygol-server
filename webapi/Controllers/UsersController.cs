@@ -340,27 +340,32 @@ namespace webapi.Controllers
         public static User GetUserForEmail(IDbConnection c, string email)
         {
             // Get from the database now from global>users
-            var userGlobal = GetGlobalUserForEmail(email);
-            if(userGlobal == null)
+            var userGlobal = GetGlobalAdminForEmail(email);
+            if (userGlobal == null)
             {
                 // Try global admin
-                return GetGlobalAdminForEmail(email);
+                userGlobal = GetGlobalUserForEmail(email);
+
+                if (userGlobal == null) return null;
+
+                var user = c.QueryFirstOrDefault<User>("SELECT * FROM users WHERE id = @id", new { id = userGlobal.Id });
+                // No Org user swap to userGlobal values
+                if (user == null)
+                {
+                    user = userGlobal;
+                }
+
+                // This columns should not be in org>users anymore they should be in global>users
+                user.Email = userGlobal.Email;
+                user.Password = userGlobal.Password;
+                user.Salt = userGlobal.Salt;
+                user.EmailConfirmed = userGlobal.EmailConfirmed;
+
+                return user;
             }
 
-            var user = c.QueryFirstOrDefault<User>("SELECT * FROM users WHERE id = @id", new { id = userGlobal.Id });
-            // No Org user swap to userGlobal values
-            if (user == null)
-            {
-                user = userGlobal;
-            }
+            return userGlobal;
 
-            // This columns should not be in org>users anymore they should be in global>users
-            user.Email = userGlobal.Email;
-            user.Password = userGlobal.Password;
-            user.Salt = userGlobal.Salt;
-            user.EmailConfirmed = userGlobal.EmailConfirmed;
-
-            return user;
             /* 🔎 INITIAL
             var users = c.Query<User>("SELECT * FROM users WHERE email iLIKE @email", new { email = email }, t);
             if (users.Count() != 1)
