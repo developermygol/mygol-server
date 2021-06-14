@@ -703,10 +703,10 @@ namespace webapi.Controllers
 
                 if (!CanRefereeModifyMatch(c, t, playerAttendance.IdMatch)) throw new Exception("Error.MatchIsClosed");
 
-                if (playerAttendance.Attended)
+                if (playerAttendance.Attended || playerAttendance.ApparelNumber != 0)
                 {
                     var mr = c.QueryMultiple(@"
-                        SELECT apparelNumber FROM teamPlayers WHERE idplayer = @idPlayer AND idTeam = @idTeam;
+                        SELECT apparelNumber, idTacticPosition FROM teamPlayers WHERE idplayer = @idPlayer AND idTeam = @idTeam;
                         SELECT id, idUser FROM players WHERE id = @idPlayer;
                         SELECT * FROM matchplayers WHERE idMatch = @idMatch AND idPlayer = @idPlayer AND idTeam = @idTeam;
                         ", playerAttendance, t);
@@ -714,7 +714,14 @@ namespace webapi.Controllers
                     var teamPlayer = mr.Read<TeamPlayer>().GetSingle();
                     var player = mr.Read<Player>().GetSingle();
 
-                    var matchPlayer = mr.ReadFirstOrDefault<MatchPlayer>();                    
+                    var matchPlayer = mr.ReadFirstOrDefault<MatchPlayer>();
+
+                    // is default titular team player
+                    bool titularPlayer = teamPlayer.IdTacticPosition != -1;
+
+                    // is default captain team player 
+                    // 🚧🚧🚧
+
                     if (matchPlayer == null)
                     {
                         // not found, insert
@@ -726,7 +733,8 @@ namespace webapi.Controllers
                             IdDay = playerAttendance.IdDay, 
                             IdMatch = playerAttendance.IdMatch, 
                             Status = 1,
-                            ApparelNumber = playerAttendance.ApparelNumber
+                            ApparelNumber = playerAttendance.ApparelNumber,
+                            Titular = titularPlayer,
                         };
                         c.Insert(matchPlayer, t);
                     }
@@ -734,8 +742,12 @@ namespace webapi.Controllers
                     {
                         // already exists, update
                         matchPlayer.Status = 1;
+                        matchPlayer.Titular = titularPlayer;
+                        matchPlayer.ApparelNumber = playerAttendance.ApparelNumber;
                         c.Update(matchPlayer, t);
                     }
+
+                    return matchPlayer;
                 }
                 else
                 {
@@ -747,10 +759,10 @@ namespace webapi.Controllers
                     c.Execute("DELETE FROM matchplayers WHERE idMatch = @idMatch AND idPlayer = @idPlayer AND idTeam = @idTeam", playerAttendance, t);
                 }
 
-                return true;
+                return null;
             });
         }
-
+                
         [HttpPost("updatecloserecord")]
         public IActionResult UpdateCloseRecord([FromBody] MatchRecordCloseData data)
         {
@@ -794,6 +806,40 @@ namespace webapi.Controllers
                 // if (!IsOrganizationAdmin()) throw new UnauthorizedAccessException();
 
                 string query = $"UPDATE matchplayersnotices SET accepted = true, accepteddate = '{DateTime.UtcNow}' WHERE idplayer = {data.IdPlayer} AND idteam = {data.IdTeam} AND idnotice = {data.IdNotice} {(isOnlyOnceNotice == true ? "" : updateAllMatchesPlayerNotices)};";
+
+                c.Execute(query, t);
+
+                return true;
+            });
+        }
+
+        [HttpPut("updatetitular")]
+        public IActionResult SetMatchTitular([FromBody] MatchPlayerTitularRequest data)
+        {
+            return DbTransaction((c, t) =>
+            {
+                if (data == null) throw new NoDataException();
+
+                // if (!IsOrganizationAdmin()) throw new UnauthorizedAccessException();
+
+                string query = $"UPDATE matchplayers SET titular = {data.Titular} WHERE idmatch = {data.IdMatch} AND idteam = {data.IdTeam} AND idplayer = {data.IdPlayer} AND iduser = {data.IdUser} AND idday = {data.IdDay} ;";
+
+                c.Execute(query, t);
+
+                return true;
+            });
+        }
+
+        [HttpPut("updatecaptain")]
+        public IActionResult SetMatchCaptain([FromBody] MatchPlayerCaptainRequest data)
+        {
+            return DbTransaction((c, t) =>
+            {
+                if (data == null) throw new NoDataException();
+
+                // if (!IsOrganizationAdmin()) throw new UnauthorizedAccessException();
+
+                string query = $"UPDATE matchplayers SET captain = {data.Captain} WHERE idmatch = {data.IdMatch} AND idteam = {data.IdTeam} AND idplayer = {data.IdPlayer} AND iduser = {data.IdUser} AND idday = {data.IdDay} ;";
 
                 c.Execute(query, t);
 
@@ -1410,4 +1456,23 @@ namespace webapi.Controllers
         public DateTime End { get; set; }
     }
 
+    public class MatchPlayerCaptainRequest
+    {
+        public long IdMatch { get; set; }
+        public long IdTeam { get; set; }
+        public long IdPlayer { get; set; }
+        public long IdUser { get; set; }
+        public long IdDay { get; set; }
+        public bool Captain { get; set; }
+    }
+
+    public class MatchPlayerTitularRequest
+    {
+        public long IdMatch { get; set; }
+        public long IdTeam { get; set; }
+        public long IdPlayer { get; set; }
+        public long IdUser { get; set; }
+        public long IdDay { get; set; }
+        public bool Titular { get; set; }
+    }
 }

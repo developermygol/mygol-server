@@ -156,6 +156,9 @@ namespace webapi.Models.Db
                 case MatchEventType.ExtraTimeSecondHalfEnd:
                     match = ApplyStatsChange(c, tr, ev, checkTeams: false, insertEvent: insertEvent);
                     break;
+                case MatchEventType.TimeOut:
+                    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
+                    break;
 
                 case MatchEventType.Assist:
                     match = ApplyStatsChange(c, tr, ev, null, p => p.Assistances++, null, null, null, insertEvent: insertEvent);
@@ -166,6 +169,9 @@ namespace webapi.Models.Db
                 case MatchEventType.Fault:
                     match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
                     break;
+                case MatchEventType.CumulativeFoul:
+                    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
+                    break;
                 case MatchEventType.Penalty:
                     match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyPoints++, null, null, null, insertEvent: insertEvent);
                     break;
@@ -174,6 +180,9 @@ namespace webapi.Models.Db
                     break;
                 case MatchEventType.PenaltyStopped:
                     match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyStopped++, null, null, null, insertEvent: insertEvent);
+                    break;
+                case MatchEventType.DoublePenalty:
+                    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
                     break;
 
                 case MatchEventType.Injury:
@@ -356,7 +365,9 @@ namespace webapi.Models.Db
                 case MatchEventType.PenaltyStopped:
                     match = ApplyStatsChange(c, tr, ev, null, p =>  p.PenaltyStopped--, null, null, null, insertEvent: insertEvent);
                     break;
-
+                case MatchEventType.DoublePenalty:
+                    match = ApplyStatsChange(c, tr, ev, null, p => p.PenaltyPoints = p.PenaltyPoints - 2, null, null, null, insertEvent: insertEvent);
+                    break;
                 //case MatchEventType.Injury:
                 //    match = ApplyStatsChange(c, tr, ev, insertEvent: insertEvent);
                 //    break;
@@ -1454,16 +1465,19 @@ namespace webapi.Models.Db
         ExtraTimeFirstHalfEnd   = 16,
         ExtraTimeSecondHalfStart = 17,
         ExtraTimeSecondHalfEnd  = 18,
-
+                
         Assist                  = 30,
         Point                   = 31,
         PointInOwn              = 32,
         Corner                  = 33,
         Fault                   = 34,
+        CumulativeFoul          = 36,
         
         Penalty                 = 40,
         PenaltyFailed           = 41,
         PenaltyStopped          = 42,
+        DoublePenalty           = 43,
+        TimeOut                 = 44,
 
         Injury                  = 50,
 

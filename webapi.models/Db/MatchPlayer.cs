@@ -17,6 +17,8 @@ namespace webapi.Models.Db
         public long IdDay { get; set; }
         public int ApparelNumber { get; set; }
         public int Status { get; set; }         // MatchPlayerStatus
+        public bool Titular { get; set; }
+        public bool Captain { get; set; }
 
         [Write(false)] public Player Player { get; set; }
     }

@@ -150,6 +150,23 @@ namespace webapi.Controllers
             });
         }
 
+        [HttpGet("active")]
+        public bool GetOrganizationActive()
+        {
+            return true;
+        }
+
+        [HttpGet("globaluserscount")]
+        public int GetGlobalUsersCount()
+        {
+            using (var c = GetGlobalDirectoryConn())
+            {
+               return c.QueryFirst<int>("SELECT COUNT(*) FROM users;");
+            }
+        }
+
+        // 🚧 globalappdownloadscount
+                
         private string GetOrgNameForEmail(string email)
         {
             using (var c = GetGlobalDirectoryConn())

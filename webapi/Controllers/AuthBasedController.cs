@@ -65,6 +65,11 @@ namespace webapi.Controllers
             return User.IsInRole("4") || User.IsInRole("5"); // MasterAdmin
         }
 
+        protected bool IsGlobalAdmin()
+        {
+           return User.IsInRole("5");
+        }
+
         protected void CheckAuthLevel(UserLevel minimumLevel)
         {
             var role = GetUserRole();

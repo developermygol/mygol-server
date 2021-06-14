@@ -53,6 +53,10 @@ namespace webapi
             AddUpdater(30, Update30, Undo30);
             AddUpdater(31, Update31, Undo31);
             AddUpdater(32, Update32, Undo32); // 🔎 Not aquired functions
+            AddUpdater(33, Update33, Undo33); 
+            AddUpdater(34, Update34, Undo34); 
+            AddUpdater(35, Update35, Undo35);
+            AddUpdater(35, Update36, Undo36);
         }
 
         public void Dispose()
@@ -1865,6 +1869,93 @@ namespace webapi
             return 32;
         }
 
+        private int Update33(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"33 -> 34: Joker"); // Any missing functionalities
+            return 34;
+        }
+
+        private int Undo33(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"33 -> 32: remove Joker"); // Any missing functionalities
+            return 33;
+        }
+
+        private int Update34(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"34 -> 35: Add defaultdateformat ");
+
+            conn.Execute(@"
+                ALTER TABLE organizations ADD COLUMN defaultdateformat TEXT;                
+            ");
+
+            return 35;
+        }
+
+        private int Undo34(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"35 -> 34: Remove defaultdateformat"); // Any missing functionalities
+
+            conn.Execute(@"
+                ALTER TABLE organizations DROP COLUMN defaultdateformat;
+            ");
+
+            return 34;
+        }
+
+        private int Update35(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"35 -> 36: Add tutorials ");
+
+            conn.Execute(@"
+                 CREATE TABLE tutorials (
+                    id	    SERIAL PRIMARY KEY,
+                    language           TEXT NOT NULL,
+                    title              TEXT NOT NULL,
+                    description                 TEXT,
+                    data1                       TEXT,
+                    data2                       TEXT,
+                    status                   INTEGER,
+                    type                     INTEGER,
+                    sequenceorder            INTEGER
+                );
+            ");
+
+            return 36;
+        }
+
+        private int Undo35(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"36 -> 35: Remove tutorials"); // Any missing functionalities
+
+            conn.Execute(@"
+                 DROP TABLE tutorials;
+            ");
+
+            return 35;
+        }
+
+        private int Update36(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"36 -> 37: Add matchplayers captain");
+
+            conn.Execute(@"
+                ALTER TABLE matchplayers ADD COLUMN captain BOOLEAN;                
+            ");
+
+            return 37;
+        }
+
+        private int Undo36(IDbConnection conn, IDbTransaction t)
+        {
+            mLogger($"37 -> 36: Remove matchplayers captain"); 
+
+            conn.Execute(@"
+                ALTER TABLE matchplayers DROP COLUMN captain;
+            ");
+
+            return 36;
+        }
 
         // Template
 

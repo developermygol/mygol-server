@@ -46,6 +46,8 @@ namespace webapi.Models.Db
         public string PaymentKeyPublic { get; set; }
         public string PaymentGetawayType { get; set; }
 
+        public string DefaultDateFormat { get; set; }
+
         //public object FrontPageLayoutData { get; set; }
 
         [Write(false)] public List<TournamentMode> Modes { get; set; }

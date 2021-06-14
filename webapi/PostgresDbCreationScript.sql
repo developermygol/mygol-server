@@ -36,7 +36,8 @@ CREATE TABLE organizations (
 	dpcompanyphone		TEXT,
 	appearancedata		TEXT,
 	termsversion		TEXT,
-	paymentgetawaytype	TEXT
+	paymentgetawaytype	TEXT,
+	defaultdateformat	TEXT
 );
 
 INSERT INTO organizations (name) VALUES ('Organization name not set');
@@ -435,12 +436,14 @@ CREATE INDEX matchevents_idplayer ON matchevents (idPlayer);
 -- Holds player data associated to the match (Match results, non-cumulative) 
 CREATE TABLE matchplayers (
 	idMatch			INTEGER NOT NULL,
-	idPlayer		INTEGER NOT NULL,
+	idPlayer			INTEGER NOT NULL,
 	idTeam			INTEGER NOT NULL,
 	idUser			INTEGER NOT NULL,
 	idDay			INTEGER NOT NULL,
 	apparelNumber	INTEGER,
-	status			INTEGER
+	status			INTEGER,
+	titular			BOOLEAN, 
+	captain			BOOLEAN,
 );
 
 CREATE INDEX matchplayers_idmatch ON matchplayers (idPlayer);
@@ -774,3 +777,16 @@ CREATE TABLE notices (
 );
 CREATE UNIQUE INDEX notices_id ON notices (id);
 CREATE UNIQUE INDEX notices_idtournament ON notices (idtournament);
+
+CREATE TABLE tutorials (
+    id			  SERIAL PRIMARY KEY,
+	language			   TEXT NOT NULL,
+    title			   TEXT NOT NULL,
+    description                 TEXT,
+    data1			            TEXT,    
+    data2						TEXT,
+    status					 INTEGER,
+    type						 INTEGER,
+    sequenceorder			 INTEGER,
+);
+CREATE UNIQUE INDEX tutorials_id ON tutorials (id);
