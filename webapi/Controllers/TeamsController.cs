@@ -297,7 +297,7 @@ namespace webapi.Controllers
 
                     var invite = new InviteInput { IdPlayer = player.Id, IdTeam = idTeam, InviteText = "Hi, we want to invite you to join our team." }; // 🚧 Lang
 
-                    return DbTransaction((c, t) =>
+                    DbTransaction((c, t) =>
                     {
                         Audit.Information(this, "{0}: Players.Invite1: {IdTeam} {IdPlayer}", GetUserId(), invite.IdTeam, invite.IdPlayer);
 

@@ -878,7 +878,7 @@ namespace webapi.Controllers
             // var idUser = c.Insert(newUser, t);
             //newUser.Id = idUser;
 
-            c.Execute($"INSERT INTO users(id, level, name, mobile) VALUES({newUser.Id}, {(int)level}, '{Player.GetName(player.Name, player.Surname)}', {player.UserData.Mobile})");
+            c.Execute($"INSERT INTO users(id, level, name, mobile) VALUES({newUser.Id}, {(int)level}, '{Player.GetName(player.Name, player.Surname)}', '{player.UserData.Mobile})'");
 
             var idUser = newUser.Id;
 
