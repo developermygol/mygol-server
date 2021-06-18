@@ -239,3 +239,4 @@ webapi/appsettings.local.json
 /webapi/organizations.json*
 /webapi/appsettings.json*
 /mygolcli/appsettings.json*
+webapi/Properties/launchSettings.json
